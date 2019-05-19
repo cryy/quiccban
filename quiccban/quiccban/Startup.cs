@@ -65,16 +65,18 @@ namespace quiccban
         {
             try
             {
-                using (var guildStorage = app.ApplicationServices.GetService<GuildStorage>())
+                using (var guildStorage = new GuildStorage())
                 {
-                    Console.WriteLine("migration inproc");
+                    Logger.LogInformation("Ensuring database is created.");
                     guildStorage.Database.EnsureCreated();
-                    Console.WriteLine("migration done");
+                    Logger.LogInformation("Success.");
+
                 }
             }
             catch(Exception e)
             {
-                Console.WriteLine($"FAIL: \n {e}");
+                Logger.LogCritical("Failed to generate/load database. Exiting.");
+                Environment.Exit(0);
             }
 
             app.ApplicationServices.GetService<DiscordService>();
