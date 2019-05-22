@@ -20,23 +20,24 @@ namespace quiccban
     public class Program
     {
         private static Logger _logger = new Logger("DILogger");
+
+        private static string dataPath = Path.GetFullPath("./data");
         public static void Main(string[] args)
         {
             try
             {
                 Console.WriteLine($"{FiggleFonts.Univers.Render("quiccban")}\n\n", Color.CadetBlue);
 
-            if(!File.Exists("./data/config.json"))
-            {
-                File.WriteAllText("./data/config.json", JsonBuilder.DefaultJsonConfig().ToString());
-                _logger.LogCritical("Missing config file. One has been generated, please fill it out.");
-                return;
-            }
+                if (!Directory.Exists(dataPath))
+                    Directory.CreateDirectory(dataPath);
 
-            var webhost = CreateWebHostBuilder(args).Build();
-            var addresser = webhost.ServerFeatures.FirstOrDefault(x => x.Value is IServerAddressesFeature).Value as IServerAddressesFeature;
+                if(!File.Exists(dataPath + "/config.json"))
+                    CreateConfig();
 
-            _logger.LogInformation($"Starting webhost on: {string.Join(", ", addresser.Addresses)}");
+                var webhost = CreateWebHostBuilder(args).Build();
+                var addresser = webhost.ServerFeatures.FirstOrDefault(x => x.Value is IServerAddressesFeature).Value as IServerAddressesFeature;
+
+                _logger.LogInformation($"Starting webhost on: {string.Join(", ", addresser.Addresses)}");
 
 
                 webhost.Run();
@@ -44,14 +45,23 @@ namespace quiccban
             catch (Exception e)
             {
                 _logger.LogCritical("Failed to start webhost.; \n{0}", e.ToString());
+                Console.ReadKey();
             }
+        }
+
+        private static void CreateConfig()
+        {
+            File.WriteAllText(dataPath + "/config.json", JsonBuilder.DefaultJsonConfig().ToString());
+            _logger.LogCritical("Missing config file. One has been generated, please fill it out.");
+            Console.ReadKey();
+            Environment.Exit(0);
         }
 
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .SuppressStatusMessages(true)
-                .UseConfiguration(new ConfigurationBuilder().AddJsonFile("./data/config.json").Build())
+                .UseConfiguration(new ConfigurationBuilder().AddJsonFile(dataPath + "/config.json").Build())
                 .ConfigureLogging(x => {
                     x.ClearProviders();
                     x.AddProvider(new LoggingProvider());

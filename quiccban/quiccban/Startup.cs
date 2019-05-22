@@ -36,6 +36,7 @@ namespace quiccban
             if (!configResult.IsValid)
             {
                 Logger.LogError($"Failed to parse config: {configResult.Message}");
+                Console.ReadKey();
                 Environment.Exit(13);
             }
 
