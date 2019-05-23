@@ -13,11 +13,14 @@ namespace quiccban
 
         public bool AllowMentionPrefix { get; }
 
-        public Config(string token, string prefix, bool mentionPrefix)
+        public bool UseOAuth { get; }
+
+        public Config(string token, string prefix, bool mentionPrefix, bool useOAuth)
         {
             DiscordToken = token;
             Prefix = prefix;
             AllowMentionPrefix = mentionPrefix;
+            UseOAuth = useOAuth;
         }
 
 

@@ -68,6 +68,7 @@ namespace quiccban
 
                     x.Services.AddSingleton(typeof(ILogger), _logger);
                 })
+                .UseUrls((args.Length > 0 ? (ushort.TryParse(args[0], out ushort port) ? $"http://*:{port}" : "http://*:3300") : "http://*:3300"))
                 .UseStartup<Startup>();
     }
 }

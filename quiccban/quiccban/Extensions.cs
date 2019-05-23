@@ -13,7 +13,8 @@ namespace quiccban
         {
             "discordToken",
             "prefix",
-            "allowMentionPrefix"
+            "allowMentionPrefix",
+            "useOAuth"
         };
 
 
@@ -31,11 +32,14 @@ namespace quiccban
             if(!bool.TryParse(config.GetValue<string>("allowMentionPrefix"), out bool allowMentionPrefix))
                 return new ConfigResult { IsValid = false, Message = "\"allowMentionPrefix\" has to be either \"true\" or \"false\"" };
 
+            if (!bool.TryParse(config.GetValue<string>("useOAuth"), out bool useOAuth))
+                return new ConfigResult { IsValid = false, Message = "\"useOAuth\" has to be either \"true\" or \"false\"" };
+
 
             return new ConfigResult
             {
                 IsValid = true,
-                ParsedConfig = new Config(config.GetValue<string>("discordToken"), config.GetValue<string>("prefix"), allowMentionPrefix)
+                ParsedConfig = new Config(config.GetValue<string>("discordToken"), config.GetValue<string>("prefix"), allowMentionPrefix, useOAuth)
             };
         }
     }
