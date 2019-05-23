@@ -41,13 +41,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\Discord\Commands\Modules\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <TypeScriptCompile Include="ClientApp\src\App.tsx" />
     <TypeScriptCompile Include="ClientApp\src\index.tsx" />
     <TypeScriptCompile Include="ClientApp\src\registerServiceWorker.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\Discord\Commands\Modules\" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

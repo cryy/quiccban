@@ -67,7 +67,6 @@ namespace quiccban.Services.Discord
                 _logger.LogInformation($"Logged into Discord as \"{discordClient.CurrentUser}\" in {discordClient.Guilds.Count} guild{(discordClient.Guilds.Count > 1 ? "s" : "")}.");
 
                 LoadCommands();
-                IsReady = true;
 
                 var guildStorage = _serviceProvider.GetService<GuildStorage>();
 
@@ -97,6 +96,8 @@ namespace quiccban.Services.Discord
                     }
                    
                 }
+
+                IsReady = true;
             };
 
             discordClient.MessageReceived += async (m) =>

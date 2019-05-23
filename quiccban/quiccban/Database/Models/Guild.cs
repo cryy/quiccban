@@ -22,13 +22,7 @@ namespace quiccban.Database.Models
         public ActionType WarnThresholdActionType { get; set; }
         public ulong WarnThresholdActionExpiry { get; set; }
 
-        public bool AutoModEnabled { get; set; }
-
-        //AMS = AutoModSpam
-        public bool AMSEnabled { get; set; }
-        public int AMSMessageTriggerAmount { get; set; }
-        public ActionType AMSActionType { get; set; }
-        public ulong AMSActionExpiry { get; set; }
+        public AutoMod AutoMod { get; set; }
 
 
         public List<Case> Cases { get; set; }
@@ -65,6 +59,18 @@ namespace quiccban.Database.Models
 
         public DateTimeOffset GetEndingTime()
             => DateTimeOffset.FromUnixTimeMilliseconds(UnixTimestamp).AddSeconds(ActionExpiry);
+
+    }
+
+    public class AutoMod
+    { 
+
+        public bool Enabled { get; set; }
+
+        public bool SpamEnabled { get; set; }
+        public int SpamMessageTriggerAmount { get; set; }
+        public ActionType SpamActionType { get; set; }
+        public ulong SpamActionExpiry { get; set; }
 
     }
 

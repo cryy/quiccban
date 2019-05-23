@@ -21,7 +21,7 @@ namespace quiccban
     {
         private static Logger _logger = new Logger("DILogger");
 
-        private static string dataPath = Path.GetFullPath("./data");
+        public static string dataPath = Path.GetFullPath("./data");
         public static void Main(string[] args)
         {
             try
