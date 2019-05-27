@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace quiccban.Database.Models
@@ -9,7 +10,10 @@ namespace quiccban.Database.Models
     {
         public ulong Id { get; set; }
 
-        public ulong LogChannel { get; set; }
+        public ulong MuteRoleId { get; set; }
+        public ulong LogChannelId { get; set; }
+
+        public LogStyle LogStyle { get; set; }
 
         /// <summary>
         /// Amount of amount of warns before <see cref="WarnThresholdActionType"/> fires
@@ -18,9 +22,9 @@ namespace quiccban.Database.Models
         /// <summary>
         /// Warn expiry in seconds.
         /// </summary>
-        public ulong WarnExpiry { get; set; }
+        public int WarnExpiry { get; set; }
         public ActionType WarnThresholdActionType { get; set; }
-        public ulong WarnThresholdActionExpiry { get; set; }
+        public int WarnThresholdActionExpiry { get; set; }
 
         public AutoMod AutoMod { get; set; }
 
@@ -35,12 +39,15 @@ namespace quiccban.Database.Models
     { 
         public int Id { get; set; }
 
+        public ulong DiscordMessageId { get; set; }
+
         public Guild Guild { get; set; }
         public ulong GuildId { get; set; }
 
         public ActionType ActionType { get; set; }
-        public ulong ActionExpiry { get; set; }
+        public int ActionExpiry { get; set; }
         public bool Resolved { get; set; }
+        public bool ForceResolved { get; set; }
         /// <summary>
         /// User who the action had been performed on.
         /// </summary>
@@ -57,8 +64,20 @@ namespace quiccban.Database.Models
         /// </summary>
         public long UnixTimestamp { get; set; }
 
+
         public DateTimeOffset GetEndingTime()
             => DateTimeOffset.FromUnixTimeMilliseconds(UnixTimestamp).AddSeconds(ActionExpiry);
+
+        public DateTimeOffset GetWarnEndingTime()
+            => DateTimeOffset.FromUnixTimeMilliseconds(UnixTimestamp).AddSeconds(Guild.WarnExpiry);
+
+        public string GetDiscordMessageLink()
+        {
+            if (DiscordMessageId == 0)
+                return null;
+
+            return $"https://discordapp.com/channels/{GuildId}/{Guild.LogChannelId}/{DiscordMessageId}";
+        }
 
     }
 
@@ -68,9 +87,9 @@ namespace quiccban.Database.Models
         public bool Enabled { get; set; }
 
         public bool SpamEnabled { get; set; }
-        public int SpamMessageTriggerAmount { get; set; }
+        public int SpamMessageThreshold { get; set; }
         public ActionType SpamActionType { get; set; }
-        public ulong SpamActionExpiry { get; set; }
+        public int SpamActionExpiry { get; set; }
 
     }
 
@@ -88,5 +107,11 @@ namespace quiccban.Database.Models
         Unmute,
         Unban,
         None
+    }
+
+    public enum LogStyle
+    {
+        Modern,
+        Basic
     }
 }

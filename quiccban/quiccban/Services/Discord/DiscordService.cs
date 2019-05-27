@@ -13,6 +13,7 @@ using System.Reflection;
 using quiccban.Services.Discord.Commands;
 using quiccban.Database;
 using ActionType = quiccban.Database.Models.ActionType;
+using Discord.Rest;
 
 namespace quiccban.Services.Discord
 {
@@ -75,11 +76,12 @@ namespace quiccban.Services.Discord
                 foreach(var guild in dbGuilds)
                 {
 
-                    var unexpiredCases = guild.Cases.Where(x => x.GetEndingTime() > DateTimeOffset.UtcNow || x.ActionType == ActionType.Warn);
+                    var unexpiredCases = guild.Cases.Where(x => (x.GetEndingTime() > DateTimeOffset.UtcNow && x.ActionType != ActionType.Warn) || (x.ActionType == ActionType.Warn && x.GetWarnEndingTime() > DateTimeOffset.UtcNow));
 
                     int failedCaseAdds = 0;
                     foreach(var guildCase in unexpiredCases)
                     {
+                        Console.WriteLine($"caching {guildCase.Id}");
                         if (!_caseHandlingService.TryAdd(guildCase))
                             failedCaseAdds++;
                     }
@@ -88,11 +90,12 @@ namespace quiccban.Services.Discord
                         _logger.LogWarning($"Failed to add {failedCaseAdds} cases to in-memory cache.");
 
                     //resolve all cases that had expired
-                    var unresolvedExpiredCases = guild.Cases.Where(x => !x.Resolved && (x.GetEndingTime() <= DateTimeOffset.UtcNow));
+                    var unresolvedExpiredCases = guild.Cases.Where(x => !x.Resolved && ((x.ActionType != ActionType.Warn && x.GetEndingTime() <= DateTimeOffset.UtcNow )|| (x.GetWarnEndingTime() <= DateTimeOffset.UtcNow && x.ActionType == ActionType.Warn)));
 
                     foreach (var guildCase in unresolvedExpiredCases)
                     {
-                        await _caseHandlingService.ResolveAsync(guildCase);
+                        Console.WriteLine($"resolving {guildCase.Id}");
+                        await _caseHandlingService.ResolveAsync(guildCase, null, null, false);
                     }
                    
                 }
@@ -109,8 +112,107 @@ namespace quiccban.Services.Discord
                 {
                     var context = new QuiccbanContext(discordClient, msg);
                     var result = await _commands.ExecuteAsync(output, context, _serviceProvider);
+
+                    if (result is FailedResult tpf)
+                    {
+                        await context.Channel.SendMessageAsync(tpf.Reason);
+                    }
                 }
 
+
+
+            };
+
+            discordClient.UserBanned += async (u, g) =>
+            {
+                await Task.Delay(500);
+
+                var auditLogs = await g.GetAuditLogsAsync(20).FlattenAsync();
+                var auditLog = auditLogs.FirstOrDefault(a => a.Data is BanAuditLogData ban && ban.Target.Id == u.Id);
+                if (auditLog == null)
+                    return;
+
+                if (auditLog.User.Id == discordClient.CurrentUser.Id)
+                    return;
+
+                var data = auditLog.Data as BanAuditLogData;
+                var dbService = _serviceProvider.GetService<DatabaseService>();
+
+                await dbService.CreateNewCaseAsync(g, auditLog.Reason, ActionType.Ban, 0, auditLog.User.Id, data.Target.Id);
+
+            };
+
+            discordClient.UserUnbanned += async (u, g) =>
+            {
+                await Task.Delay(500);
+
+                var auditLogs = await g.GetAuditLogsAsync(20).FlattenAsync();
+                var auditLog = auditLogs.FirstOrDefault(a => a.Data is UnbanAuditLogData unban && unban.Target.Id == u.Id);
+                if (auditLog == null)
+                    return;
+
+                if (auditLog.User.Id == discordClient.CurrentUser.Id)
+                    return;
+
+                var data = auditLog.Data as UnbanAuditLogData;
+                var dbService = _serviceProvider.GetService<DatabaseService>();
+                var caseService = _serviceProvider.GetService<CaseHandlingService>();
+
+                var tempcase = caseService.GetCases().FirstOrDefault(x => x.GuildId == g.Id && x.TargetId == data.Target.Id && x.ActionType == ActionType.Tempban && !x.Resolved);
+                if (tempcase != null)
+                    await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true);
+                else
+                    await dbService.CreateNewCaseAsync(g, auditLog.Reason, ActionType.Ban, 0, auditLog.User.Id, data.Target.Id);
+            };
+
+            discordClient.UserLeft += async (u) =>
+            {
+                await Task.Delay(500);
+
+                var auditLogs = await u.Guild.GetAuditLogsAsync(20).FlattenAsync();
+                var auditLog = auditLogs.FirstOrDefault(a => a.Data is KickAuditLogData kick && kick.Target.Id == u.Id);
+                if (auditLog == null)
+                    return;
+
+                if (auditLog.User.Id == discordClient.CurrentUser.Id)
+                    return;
+
+                var data = auditLog.Data as KickAuditLogData;
+                var dbService = _serviceProvider.GetService<DatabaseService>();
+
+                await dbService.CreateNewCaseAsync(u.Guild, auditLog.Reason, ActionType.Kick, 0, auditLog.User.Id, data.Target.Id);
+            };
+
+            discordClient.GuildMemberUpdated += async (u_before, u_after) =>
+            {
+                await Task.Delay(500);
+
+                var auditLogs = await u_after.Guild.GetAuditLogsAsync(20).FlattenAsync();
+                var auditLog = auditLogs.FirstOrDefault(a => a.Data is MemberRoleAuditLogData role && role.Target.Id == u_after.Id);
+                if (auditLog == null)
+                    return;
+
+                if (auditLog.User.Id == discordClient.CurrentUser.Id)
+                    return;
+
+                var data = auditLog.Data as MemberRoleAuditLogData;
+
+                var dbService = _serviceProvider.GetService<DatabaseService>();
+                var caseService = _serviceProvider.GetService<CaseHandlingService>();
+                var dbGuild = await dbService.GetOrCreateGuildAsync(u_after.Guild);
+
+                if(data.Roles.Any(x => x.RoleId == dbGuild.MuteRoleId && x.Added))
+                {
+                    await dbService.CreateNewCaseAsync(u_after.Guild, auditLog.Reason, ActionType.Mute, 0, auditLog.User.Id, data.Target.Id);
+                }
+                else if(data.Roles.Any(x => x.RoleId == dbGuild.MuteRoleId && !x.Added))
+                {
+                    var tempcase = caseService.GetCases().FirstOrDefault(x => x.TargetId == data.Target.Id && x.ActionType == ActionType.Tempmute && !x.Resolved);
+                    if (tempcase != null)
+                        await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true);
+                    else
+                        await dbService.CreateNewCaseAsync(u_after.Guild, auditLog.Reason, ActionType.Unmute, 0, auditLog.User.Id, data.Target.Id);
+                }
             };
 
 
@@ -141,7 +243,7 @@ namespace quiccban.Services.Discord
         private void LoadCommands()
         {
             _prefixes.Add(_config.Prefix);
-            if(_config.AllowMentionPrefix)
+            if (_config.AllowMentionPrefix)
             {
                 _prefixes.Add($"<@{discordClient.CurrentUser.Id}>");
                 _prefixes.Add($"<@!{discordClient.CurrentUser.Id}>");
@@ -156,11 +258,15 @@ namespace quiccban.Services.Discord
             _commands.AddTypeParser(new SocketGuildChannelParser<SocketCategoryChannel>());
             _commands.AddTypeParser(new SocketGuildChannelParser<SocketVoiceChannel>());
             _commands.AddTypeParser(new SocketRoleParser());
+            _commands.AddTypeParser(new CaseParser());
+            _commands.AddTypeParser(new TimeSpanParser());
+            _commands.AddTypeParser(new BanParser());
+            
 
-            _commands.AddModules(Assembly.GetEntryAssembly(), action: m => {
-                
+            _commands.AddModules(Assembly.GetEntryAssembly(), action: m =>
+            {
+
             });
-
         }
     }
 }

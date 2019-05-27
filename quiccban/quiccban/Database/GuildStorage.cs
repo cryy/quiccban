@@ -28,6 +28,9 @@ namespace quiccban.Database
             {
                 g.HasKey(x => x.Id);
 
+                g.Property(x => x.LogStyle)
+                .HasDefaultValue(LogStyle.Modern);
+
                 g.Property(x => x.WarnThreshold)
                 .HasDefaultValue(3);
 
@@ -68,7 +71,7 @@ namespace quiccban.Database
 
         private async Task<Guild> CreateGuildAsync(ulong guildId)
         {
-            var newGuild = new Guild { Id = guildId, AutoMod = new AutoMod { Enabled = true, SpamEnabled = true, SpamActionType = Models.ActionType.Warn, SpamMessageTriggerAmount = 5} };
+            var newGuild = new Guild { Id = guildId, AutoMod = new AutoMod { Enabled = true, SpamEnabled = true, SpamActionType = Models.ActionType.Warn, SpamMessageThreshold = 5} };
 
             await Guilds.AddAsync(newGuild);
 

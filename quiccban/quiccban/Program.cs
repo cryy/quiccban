@@ -34,6 +34,8 @@ namespace quiccban
                 if(!File.Exists(dataPath + "/config.json"))
                     CreateConfig();
 
+
+
                 var webhost = CreateWebHostBuilder(args).Build();
                 var addresser = webhost.ServerFeatures.FirstOrDefault(x => x.Value is IServerAddressesFeature).Value as IServerAddressesFeature;
 

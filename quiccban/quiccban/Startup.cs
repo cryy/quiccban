@@ -44,11 +44,13 @@ namespace quiccban
                 IgnoreExtraArguments = true
             });
             
-            services.AddSingleton(typeof(Config), configResult.ParsedConfig);
-            services.AddSingleton(typeof(CommandService), commandService);
+            services.AddSingleton(configResult.ParsedConfig);
+            services.AddSingleton(commandService);
+            services.AddSingleton(new ResponseService());
             services.AddSingleton((provider) => new DiscordService(provider));
             services.AddSingleton((provider) => new CaseHandlingService(provider));
             services.AddSingleton((provider) => new DatabaseService(provider));
+            services.AddSingleton((provider) => new HelperService(provider));
             services.AddDbContext<GuildStorage>(ServiceLifetime.Transient);
 
 
