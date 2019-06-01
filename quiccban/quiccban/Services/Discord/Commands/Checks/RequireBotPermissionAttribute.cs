@@ -3,8 +3,9 @@ using Discord.WebSocket;
 using Qmmands;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace quiccban.Services.Discord.Commands.Checks
+namespace quiccban.Services.Discord.Commands
 {
     /// <summary>
     ///     Requires the bot to have a specific permission in the channel a command is invoked in.
@@ -58,16 +59,15 @@ namespace quiccban.Services.Discord.Commands.Checks
         {
             var context = (QuiccbanContext)ctx;
 
-            SocketGuildUser guildUser = null;
-            if (context.Guild != null)
-                guildUser = context.Guild.CurrentUser;
+            var responseService = provider.GetService<ResponseService>();
+
+            var guildUser = context.Guild.CurrentUser;
+
 
             if (GuildPermission.HasValue)
             {
-                if (guildUser == null)
-                    return Task.FromResult(new CheckResult(NotAGuildErrorMessage ?? "Command must be used in a guild channel."));
                 if (!guildUser.GuildPermissions.Has(GuildPermission.Value))
-                    return Task.FromResult(new CheckResult($"Bot requires guild permission {GuildPermission.Value}."));
+                    return Task.FromResult(new CheckResult(string.Format(responseService.Get("bot_require_guild_permission"), GuildPermission.Value)));
             }
 
             if (ChannelPermission.HasValue)
@@ -79,7 +79,7 @@ namespace quiccban.Services.Discord.Commands.Checks
                     perms = ChannelPermissions.All(context.Channel);
 
                 if (!perms.Has(ChannelPermission.Value))
-                    return Task.FromResult(new CheckResult($"Bot requires channel permission {ChannelPermission.Value}."));
+                    return Task.FromResult(new CheckResult(string.Format(responseService.Get("bot_require_channel_permission"), ChannelPermission.Value)));
             }
 
             return Task.FromResult(CheckResult.Successful);

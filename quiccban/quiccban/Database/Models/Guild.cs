@@ -99,10 +99,11 @@ namespace quiccban.Database.Models
     {
         Warn,
         Kick,
-        Tempmute,
+        TempMute,
         Mute,
-        Tempban,
+        TempBan,
         Ban,
+        HackBan,
         Unwarn,
         Unmute,
         Unban,

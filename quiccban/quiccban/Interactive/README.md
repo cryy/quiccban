@@ -1,0 +1,1 @@
+﻿Cloned and modified from [Discord.Addons.Interactive](https://github.com/foxbot/Discord.Addons.Interactive).

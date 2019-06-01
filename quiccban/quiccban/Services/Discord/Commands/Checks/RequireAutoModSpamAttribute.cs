@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace quiccban.Services.Discord.Commands.Checks
+namespace quiccban.Services.Discord.Commands
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
     public class RequireAutoModSpamAttribute : CheckBaseAttribute

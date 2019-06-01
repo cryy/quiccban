@@ -20,7 +20,7 @@ namespace quiccban.Services.Discord.Commands
 
             var responseService = provider.GetService<ResponseService>();
 
-            return context.User.Hierarchy >= u.Hierarchy ? Task.FromResult(CheckResult.Successful) : Task.FromResult(new CheckResult(responseService.Get("requires_higher_equal_hierarchy")));
+            return context.User.Hierarchy >= u.Hierarchy ? Task.FromResult(CheckResult.Successful) : Task.FromResult(new CheckResult(responseService.Get("require_higher_equal_hierarchy")));
         }
     }
 }

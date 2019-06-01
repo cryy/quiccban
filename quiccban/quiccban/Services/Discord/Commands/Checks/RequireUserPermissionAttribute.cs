@@ -2,8 +2,10 @@
 using System;
 using System.Threading.Tasks;
 using Discord;
+using Microsoft.Extensions.DependencyInjection;
+using Humanizer;
 
-namespace quiccban.Services.Discord.Commands.Checks
+namespace quiccban.Services.Discord.Commands
 {
     /// <summary>
     /// This attribute requires that the user invoking the command has a specified permission.
@@ -56,14 +58,14 @@ namespace quiccban.Services.Discord.Commands.Checks
 
             var context = (QuiccbanContext)ctx;
 
+            var responseService = services.GetService<ResponseService>();
+
             var guildUser = context.User;
 
             if (GuildPermission.HasValue)
             {
-                if (guildUser == null)
-                    return Task.FromResult(new CheckResult(NotAGuildErrorMessage ?? "Command must be used in a guild channel."));
                 if (!guildUser.GuildPermissions.Has(GuildPermission.Value))
-                    return Task.FromResult(new CheckResult($"User requires guild permission {GuildPermission.Value}."));
+                    return Task.FromResult(new CheckResult(string.Format(responseService.Get("require_guild_permission"), GuildPermission.Value.Humanize())));
             }
 
             if (ChannelPermission.HasValue)
@@ -75,7 +77,7 @@ namespace quiccban.Services.Discord.Commands.Checks
                     perms = ChannelPermissions.All(context.Channel);
 
                 if (!perms.Has(ChannelPermission.Value))
-                    return Task.FromResult(new CheckResult($"User requires channel permission {ChannelPermission.Value}."));
+                    return Task.FromResult(new CheckResult(string.Format(responseService.Get("require_channel_permission"), ChannelPermission.Value.Humanize())));
             }
 
             return Task.FromResult(CheckResult.Successful);

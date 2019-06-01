@@ -38,7 +38,7 @@ namespace quiccban.Database
                 .HasDefaultValue(86400);
 
                 g.Property(x => x.WarnThresholdActionType)
-                .HasDefaultValue(Models.ActionType.Tempmute);
+                .HasDefaultValue(Models.ActionType.TempMute);
 
                 g.Property(x => x.WarnThresholdActionExpiry)
                 .HasDefaultValue(600);
@@ -53,9 +53,7 @@ namespace quiccban.Database
 
 
             modelBuilder.Entity<Case>(c => {
-                c.HasKey(x => x.Id);
-
-                c.Property(x => x.Id).ValueGeneratedOnAdd();
+                c.HasKey(x => new { x.GuildId, x.Id });
             });
             
         }

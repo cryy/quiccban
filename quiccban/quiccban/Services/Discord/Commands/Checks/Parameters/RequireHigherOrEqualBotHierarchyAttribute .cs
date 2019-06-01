@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace quiccban.Services.Discord.Commands
 {
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = true, Inherited = true)]
-    public class RequireHigherHierarchyAttribute : ParameterCheckBaseAttribute
+    public class RequireHigherOrEqualBotHierarchyAttribute : ParameterCheckBaseAttribute
     {
         public override Task<CheckResult> CheckAsync(object argument, ICommandContext ctx, IServiceProvider provider)
         {
@@ -20,7 +20,7 @@ namespace quiccban.Services.Discord.Commands
 
             var responseService = provider.GetService<ResponseService>();
 
-            return context.User.Hierarchy > u.Hierarchy ? Task.FromResult(CheckResult.Successful) : Task.FromResult(new CheckResult(responseService.Get("require_higher_hierarchy")));
+            return context.Guild.CurrentUser.Hierarchy >= u.Hierarchy ? Task.FromResult(CheckResult.Successful) : Task.FromResult(new CheckResult(responseService.Get("bot_require_higher_equal_hierarchy")));
         }
     }
 }

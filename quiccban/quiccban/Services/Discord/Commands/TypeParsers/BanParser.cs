@@ -18,38 +18,30 @@ namespace quiccban.Services.Discord.Commands
             IEnumerable<RestBan> bans;
             RestBan ban = null;
 
-            try
+            bans = (await context.Guild.GetBansAsync()).OfType<RestBan>();
+
+            if (value.Length > 3 && value[0] == '<' && value[1] == '@' && value[value.Length - 1] == '>' && ulong.TryParse(value[2] == '!' ? value.Substring(3, value.Length - 4) : value.Substring(2, value.Length - 3), out var id)
+                || ulong.TryParse(value, out id))
+                ban = bans.FirstOrDefault(x => x.User.Id == id);
+
+            if (ban == null)
             {
-
-                bans = (await context.Guild.GetBansAsync()).OfType<RestBan>();
-
-                if (value.Length > 3 && value[0] == '<' && value[1] == '@' && value[value.Length - 1] == '>' && ulong.TryParse(value[2] == '!' ? value.Substring(3, value.Length - 4) : value.Substring(2, value.Length - 3), out var id)
-                    || ulong.TryParse(value, out id))
-                    ban = bans.FirstOrDefault(x => x.User.Id == id);
-
-                if (ban == null)
-                {
-                    var hashIndex = value.LastIndexOf('#');
-                    if (hashIndex != -1 && hashIndex + 5 == value.Length)
-                        ban = bans.FirstOrDefault(x => x.User.Username == value.Substring(0, value.Length - 5) && x.User.Discriminator == value.Substring(hashIndex + 1));
-                }
-
-                if (ban == null)
-                {
-                    IReadOnlyList<RestBan> matchingBans;
-
-                    matchingBans = bans.Where(x => x.User.Username == value).ToImmutableArray();
-
-                    if (matchingBans.Count > 1)
-                        return new TypeParserResult<RestBan>($"Multiple matches found. Use the user's ID or username#discriminator.");
-
-                    if (matchingBans.Count == 1)
-                        ban = matchingBans[0];
-                }
+                var hashIndex = value.LastIndexOf('#');
+                if (hashIndex != -1 && hashIndex + 5 == value.Length)
+                    ban = bans.FirstOrDefault(x => x.User.Username == value.Substring(0, value.Length - 5) && x.User.Discriminator == value.Substring(hashIndex + 1));
             }
-            catch(Exception e)
+
+            if (ban == null)
             {
-                Console.WriteLine(e);
+                IReadOnlyList<RestBan> matchingBans;
+
+                matchingBans = bans.Where(x => x.User.Username == value).ToImmutableArray();
+
+                if (matchingBans.Count > 1)
+                    return new TypeParserResult<RestBan>($"Multiple matches found. Use the user's ID or username#discriminator.");
+
+                if (matchingBans.Count == 1)
+                    ban = matchingBans[0];
             }
 
             return ban == null

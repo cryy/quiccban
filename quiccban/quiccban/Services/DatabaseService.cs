@@ -10,6 +10,7 @@ using ActionType = quiccban.Database.Models.ActionType;
 using System.Threading;
 using quiccban.Services.Discord;
 using Discord.WebSocket;
+using Humanizer;
 
 namespace quiccban.Services
 {
@@ -67,6 +68,11 @@ namespace quiccban.Services
             await databaseLock.WaitAsync();
             try
             {
+                var currentUser = await guild.GetCurrentUserAsync();
+
+                if (!currentUser.GuildPermissions.BanMembers || !currentUser.GuildPermissions.ManageRoles || !currentUser.GuildPermissions.KickMembers || !currentUser.GuildPermissions.ManageChannels)
+                    throw new InvalidOperationException("Don't have enough permissions.");
+
                 using (var guildStorage = new GuildStorage())
                 {
                     var dbGuild = await guildStorage.GetOrCreateGuildAsync(guild.Id);
@@ -82,14 +88,15 @@ namespace quiccban.Services
                         TargetId = targetId,
                         ActionExpiry = actionExpiry,
                         UnixTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                        ForceResolved = false
+                        ForceResolved = false,
+                        Id = dbGuild.Cases.LastOrDefault() == null ? 1 : dbGuild.Cases.LastOrDefault().Id + 1
                     };
 
                     switch(actionType)
                     {
                         case ActionType.Warn:
-                        case ActionType.Tempban:
-                        case ActionType.Tempmute:
+                        case ActionType.TempBan:
+                        case ActionType.TempMute:
                             @case.Resolved = false;
                             break;
                         default:
@@ -120,7 +127,7 @@ namespace quiccban.Services
                             break;
                         case LogStyle.Modern:
                             var eb = new EmbedBuilder();
-                            eb.WithTitle($"Case **{latestCase.Id}**  »  {latestCase.ActionType}");
+                            eb.WithTitle($"Case **{latestCase.Id}**  »  {latestCase.ActionType.Humanize()}");
                             eb.WithDescription(await _helperService.ConstructCaseMessageAsync(latestCase));
                             msg = await logChannel.SendMessageAsync(embed: eb.Build());
                             break;
@@ -139,20 +146,25 @@ namespace quiccban.Services
                     {
                         if (dbGuild.Cases.Count(x => !x.Resolved && x.ActionType == ActionType.Warn && x.TargetId == targetId) > dbGuild.WarnThreshold)
                         {
-                            if (!dbGuild.Cases.Any(x => !x.Resolved && x.IssuerId == discordService.discordClient.CurrentUser.Id && x.Reason == "Warn threshold crossed."))
+                            if (!dbGuild.Cases.Any(x => !x.Resolved && x.ActionType == dbGuild.WarnThresholdActionType))
                             {
                                 _ = Task.Delay(100).ContinueWith(async _ =>
                                 {
                                     await databaseLock.WaitAsync();
                                     try
                                     {
+                                        currentUser = await guild.GetCurrentUserAsync();
+
+                                        if (!currentUser.GuildPermissions.BanMembers || !currentUser.GuildPermissions.ManageRoles || !currentUser.GuildPermissions.KickMembers || !currentUser.GuildPermissions.ManageChannels)
+                                            throw new InvalidOperationException("Don't have enough permissions.");
+
                                         var socketguild = discordService.discordClient.GetGuild(guild.Id);
                                         var user = socketguild.GetUser(targetId);
 
                                         switch (dbGuild.WarnThresholdActionType)
                                         {
                                             case ActionType.Mute:
-                                            case ActionType.Tempmute:
+                                            case ActionType.TempMute:
                                                 IRole muteRole = socketguild.GetRole(dbGuild.MuteRoleId);
                                                 if (muteRole == null)
                                                     muteRole = await _helperService.CreateMuteRoleAsync(dbGuild, false);
@@ -160,7 +172,7 @@ namespace quiccban.Services
                                                 await user.AddRoleAsync(muteRole);
                                                 break;
                                             case ActionType.Ban:
-                                            case ActionType.Tempban:
+                                            case ActionType.TempBan:
                                                 await user.BanAsync(0, "Warn threshold crossed.");
                                                 break;
                                             case ActionType.Kick:
@@ -198,7 +210,7 @@ namespace quiccban.Services
             await databaseLock.WaitAsync();
             try
             {
-                await _caseHandlingService.ResolveAsync(guildCase, resolver, reason, true);
+                await _caseHandlingService.ResolveAsync(guildCase, resolver, reason, true, false);
             }
             finally
             {
@@ -206,13 +218,15 @@ namespace quiccban.Services
             }
         }
 
-        public async Task UpdateCaseAsync(Case @case)
+        public async Task UpdateCaseAsync(Case @case, bool doLock)
         {
+            if(doLock)
             await databaseLock.WaitAsync();
             try
             {
                 using (var guildStorage = new GuildStorage())
                 {
+
                     var guildCase = @case.Guild.Cases.FirstOrDefault(x => x.Id == @case.Id);
 
                     guildCase = @case;
@@ -225,6 +239,7 @@ namespace quiccban.Services
             }
             finally
             {
+                if(doLock)
                 databaseLock.Release();
             }
         }
@@ -250,9 +265,6 @@ namespace quiccban.Services
             }
         }
 
-        public Task LockSemaphore() => databaseLock.WaitAsync();
-
-        public void ReleaseSemaphore() => databaseLock.Release();
 
     }
 }

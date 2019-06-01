@@ -95,7 +95,7 @@ namespace quiccban.Services.Discord
                     foreach (var guildCase in unresolvedExpiredCases)
                     {
                         Console.WriteLine($"resolving {guildCase.Id}");
-                        await _caseHandlingService.ResolveAsync(guildCase, null, null, false);
+                        await _caseHandlingService.ResolveAsync(guildCase, null, null, false, false);
                     }
                    
                 }
@@ -113,10 +113,23 @@ namespace quiccban.Services.Discord
                     var context = new QuiccbanContext(discordClient, msg);
                     var result = await _commands.ExecuteAsync(output, context, _serviceProvider);
 
-                    if (result is FailedResult tpf)
-                    {
-                        await context.Channel.SendMessageAsync(tpf.Reason);
-                    }
+                    if (result is QuiccbanSuccessResult success && !string.IsNullOrWhiteSpace(success.ReplyValue))
+                        await context.Channel.SendMessageAsync(success.ReplyValue);
+
+                    if (result is QuiccbanFailResult inCommandFail)
+                        await context.Channel.SendMessageAsync(inCommandFail.Reason);
+
+                    if (result is ChecksFailedResult checkFail)
+                        await context.Channel.SendMessageAsync(checkFail.FailedChecks.FirstOrDefault().Error);
+
+                    if(result is ParameterChecksFailedResult paramCheckFail)
+                        await context.Channel.SendMessageAsync(paramCheckFail.FailedChecks.FirstOrDefault().Error);
+
+                    if (result is FailedResult r)
+                        Console.WriteLine(r);
+
+                    if (result is ExecutionFailedResult rr)
+                        Console.WriteLine(rr.Exception);
                 }
 
 
@@ -158,9 +171,9 @@ namespace quiccban.Services.Discord
                 var dbService = _serviceProvider.GetService<DatabaseService>();
                 var caseService = _serviceProvider.GetService<CaseHandlingService>();
 
-                var tempcase = caseService.GetCases().FirstOrDefault(x => x.GuildId == g.Id && x.TargetId == data.Target.Id && x.ActionType == ActionType.Tempban && !x.Resolved);
+                var tempcase = caseService.GetCases().FirstOrDefault(x => x.GuildId == g.Id && x.TargetId == data.Target.Id && x.ActionType == ActionType.TempBan && !x.Resolved);
                 if (tempcase != null)
-                    await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true);
+                    await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true, false);
                 else
                     await dbService.CreateNewCaseAsync(g, auditLog.Reason, ActionType.Ban, 0, auditLog.User.Id, data.Target.Id);
             };
@@ -207,9 +220,9 @@ namespace quiccban.Services.Discord
                 }
                 else if(data.Roles.Any(x => x.RoleId == dbGuild.MuteRoleId && !x.Added))
                 {
-                    var tempcase = caseService.GetCases().FirstOrDefault(x => x.TargetId == data.Target.Id && x.ActionType == ActionType.Tempmute && !x.Resolved);
+                    var tempcase = caseService.GetCases().FirstOrDefault(x => x.TargetId == data.Target.Id && x.ActionType == ActionType.TempMute && !x.Resolved);
                     if (tempcase != null)
-                        await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true);
+                        await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true, false);
                     else
                         await dbService.CreateNewCaseAsync(u_after.Guild, auditLog.Reason, ActionType.Unmute, 0, auditLog.User.Id, data.Target.Id);
                 }
@@ -267,6 +280,7 @@ namespace quiccban.Services.Discord
             {
 
             });
+
         }
     }
 }

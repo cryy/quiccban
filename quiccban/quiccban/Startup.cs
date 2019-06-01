@@ -1,3 +1,6 @@
+using Discord.Addons.Interactive;
+using Humanizer.Configuration;
+using Humanizer.DateTimeHumanizeStrategy;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -40,6 +43,8 @@ namespace quiccban
                 Environment.Exit(13);
             }
 
+            Configurator.DateTimeOffsetHumanizeStrategy = new PrecisionDateTimeOffsetHumanizeStrategy(.5);
+
             var commandService = new CommandService(new CommandServiceConfiguration {
                 IgnoreExtraArguments = true
             });
@@ -51,6 +56,12 @@ namespace quiccban
             services.AddSingleton((provider) => new CaseHandlingService(provider));
             services.AddSingleton((provider) => new DatabaseService(provider));
             services.AddSingleton((provider) => new HelperService(provider));
+            services.AddSingleton((provider) =>
+            {
+                var discordService = provider.GetService<DiscordService>();
+
+                return new InteractiveService(discordService.discordClient);
+            });
             services.AddDbContext<GuildStorage>(ServiceLifetime.Transient);
 
 
@@ -61,6 +72,9 @@ namespace quiccban
             {
                 configuration.RootPath = "ClientApp/build";
             });
+
+
+
 
         }
 

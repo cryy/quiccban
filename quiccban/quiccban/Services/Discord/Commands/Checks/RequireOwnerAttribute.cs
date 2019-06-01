@@ -4,8 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace quiccban.Services.Discord.Commands.Checks
+namespace quiccban.Services.Discord.Commands
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
     public class RequireOwnerAttribute : CheckBaseAttribute
@@ -14,16 +15,13 @@ namespace quiccban.Services.Discord.Commands.Checks
         {
             var context = (QuiccbanContext)ctx;
 
-            switch (context.Client.TokenType)
-            {
-                case TokenType.Bot:
-                    var application = await context.Client.GetApplicationInfoAsync().ConfigureAwait(false);
-                    if (context.User.Id != application.Owner.Id)
-                        return new CheckResult("Command can only be run by the owner of the bot.");
-                    return CheckResult.Successful;
-                default:
-                    return new CheckResult($"{nameof(RequireOwnerAttribute)} is not supported by this {nameof(TokenType)}.");
-            }
+            var responseService = services.GetService<ResponseService>();
+
+            var application = await context.Client.GetApplicationInfoAsync().ConfigureAwait(false);
+            if (context.User.Id != application.Owner.Id)
+                return new CheckResult(responseService.Get("owner_only_command"));
+            return CheckResult.Successful;
+
         }
     }
 }
