@@ -17,6 +17,7 @@ using quiccban.Logging;
 using quiccban.Services;
 using quiccban.Services.Discord;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace quiccban
@@ -48,10 +49,14 @@ namespace quiccban
             var commandService = new CommandService(new CommandServiceConfiguration {
                 IgnoreExtraArguments = true
             });
+            var responseService = new ResponseService(Logger);
+
+            if (File.Exists(Program.dataPath + "/responses.json"))
+                responseService.Load();
             
             services.AddSingleton(configResult.ParsedConfig);
             services.AddSingleton(commandService);
-            services.AddSingleton(new ResponseService());
+            services.AddSingleton(responseService);
             services.AddSingleton((provider) => new DiscordService(provider));
             services.AddSingleton((provider) => new CaseHandlingService(provider));
             services.AddSingleton((provider) => new DatabaseService(provider));

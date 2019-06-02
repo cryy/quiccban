@@ -236,3 +236,6 @@ _Pvt_Extensions
 
 #Config file
 config.json
+
+#Responses
+responses.json

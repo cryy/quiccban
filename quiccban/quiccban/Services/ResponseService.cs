@@ -1,5 +1,9 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,7 +11,14 @@ namespace quiccban.Services
 {
     public class ResponseService
     {
+        ILogger _logger;
+        public ResponseService(ILogger logger)
+        {
+            _logger = logger;
+        }
+
         private object _overwriteLock = new object();
+        private object _loadLock = new object();
         private Dictionary<string, string> Responses = new Dictionary<string, string>()
         {
             {"history_no_cases", "{0} has no {2}cases." },
@@ -75,11 +86,57 @@ namespace quiccban.Services
 
         public void Overwrite(string key, string value)
         {
-            lock(_overwriteLock)
+            lock (_overwriteLock)
             {
                 Responses[key] = value;
             }
         }
 
+        public void Load()
+        {
+            lock (_loadLock)
+            {
+                if (!File.Exists(Program.dataPath + "/responses.json"))
+                    throw new FileNotFoundException("responses.json does not exist.");
+
+                JObject json;
+                try
+                {
+                    json = JObject.Parse(File.ReadAllText(Program.dataPath + "/responses.json"));
+                }
+                catch
+                {
+                    _logger.LogError("responses.json is not in valid json format.");
+                    return;
+                }
+                
+
+                var props = json.Properties();
+                var overwriteValues = new Dictionary<string, string>();
+
+                foreach (var prop in props)
+                {
+                    if (overwriteValues.ContainsKey(prop.Name))
+                        _logger.LogWarning($"responses.json already contains a definition for \"{prop.Name}\", this one will not be used.");
+                    else
+                    {
+                        if (Responses.ContainsKey(prop.Name))
+                        {
+                            if (prop.Value.Type != JTokenType.String)
+                                _logger.LogWarning($"\"{prop.Name}\" in responses.json is not of type string, it will not be used.");
+                            else
+                                overwriteValues.Add(prop.Name, prop.Value.ToString());
+                        }
+                    }
+
+                }
+
+                foreach (var overwriteValue in overwriteValues)
+                    Responses[overwriteValue.Key] = overwriteValue.Value;
+
+                _logger.LogInformation($"Overwrote {overwriteValues.Count} responses via responses.json.");
+            }
+
+        }
     }
 }
