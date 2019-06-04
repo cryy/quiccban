@@ -2,7 +2,7 @@
 An easy to use, configurable & selfhostable moderation bot, with a really nice web UI.
 
 ## Running
-;todo
+Download the latest version from the releases page for your platform and run it. No additional SDKs required.
 
 ## Building
 ### Prerequisites
