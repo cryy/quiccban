@@ -27,6 +27,7 @@
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
     <Compile Remove="Services\Discord\Modules\**" />
+    <Compile Remove="data\**" />
     <Content Remove="$(SpaRoot)**" />
     <Content Remove="Services\Discord\Modules\**" />
     <EmbeddedResource Remove="Services\Discord\Modules\**" />
