@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,28 +19,27 @@ namespace quiccban
         };
 
 
-        public static ConfigResult ParseConfig(this IConfiguration config)
+        public static ConfigResult ParseConfig(this JObject config)
         {
            
-            var configEnumerable = config.AsEnumerable();
 
-            if (!RequiredConfigValues.All(x => configEnumerable.Any(y => y.Key == x)))
+            if (!RequiredConfigValues.All(x => config.Properties().Any(y => y.Name == x)))
                 return new ConfigResult { IsValid = false, Message = "Required config values are missing." };
 
-            if (RequiredConfigValues.Any(x => string.IsNullOrWhiteSpace(configEnumerable.First(y => y.Key == x).Value)))
+            if (RequiredConfigValues.Any(x => string.IsNullOrWhiteSpace(config.Properties().First(y => y.Name == x).Value.ToString())))
                 return new ConfigResult { IsValid = false, Message = "Required config values are null or empty." };
 
-            if(!bool.TryParse(config.GetValue<string>("allowMentionPrefix"), out bool allowMentionPrefix))
+            if(!bool.TryParse(config.Properties().FirstOrDefault(x => x.Name == "allowMentionPrefix").ToString(), out bool allowMentionPrefix))
                 return new ConfigResult { IsValid = false, Message = "\"allowMentionPrefix\" has to be either \"true\" or \"false\"" };
 
-            if (!bool.TryParse(config.GetValue<string>("useOAuth"), out bool useOAuth))
+            if (!bool.TryParse(config.Properties().FirstOrDefault(x => x.Name == "useOAuth").ToString(), out bool useOAuth))
                 return new ConfigResult { IsValid = false, Message = "\"useOAuth\" has to be either \"true\" or \"false\"" };
 
 
             return new ConfigResult
             {
                 IsValid = true,
-                ParsedConfig = new Config(config.GetValue<string>("discordToken"), config.GetValue<string>("prefix"), allowMentionPrefix, useOAuth)
+                ParsedConfig = new Config(config.GetValue("discordToken").Value<string>(), config.GetValue("prefix").Value<string>(), allowMentionPrefix, useOAuth)
             };
         }
     }

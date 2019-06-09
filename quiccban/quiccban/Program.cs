@@ -59,14 +59,14 @@ namespace quiccban
             Environment.Exit(0);
         }
 
-
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .SuppressStatusMessages(true)
-                .UseConfiguration(new ConfigurationBuilder().AddJsonFile(dataPath + "/config.json").Build())
                 .ConfigureLogging(x => {
                     x.ClearProviders();
                     x.AddProvider(new LoggingProvider());
+
+                    x.AddFilter("Microsoft", LogLevel.Warning);
 
                     x.Services.AddSingleton(typeof(ILogger), _logger);
                 })

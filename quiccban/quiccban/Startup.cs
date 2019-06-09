@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using Qmmands;
 using quiccban.API;
 using quiccban.Database;
@@ -18,25 +19,26 @@ using quiccban.Services;
 using quiccban.Services.Discord;
 using System;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace quiccban
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, ILogger logger)
+        public Startup(ILogger logger)
         {
-            Configuration = configuration;
             Logger = logger;
         }
 
         public ILogger Logger;
-        public IConfiguration Configuration { get; }
 
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var configResult = Configuration.ParseConfig();
+            var configJObject = JObject.Parse(File.ReadAllText(Program.dataPath + "/config.json"));
+
+            var configResult = configJObject.ParseConfig();
             if (!configResult.IsValid)
             {
                 Logger.LogError($"Failed to parse config: {configResult.Message}");
@@ -75,7 +77,7 @@ namespace quiccban
             
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = "ClientApp/build";
+                configuration.RootPath = Path.Combine(Assembly.GetEntryAssembly().Location, "../ClientApp/build");
             });
 
 
@@ -95,7 +97,7 @@ namespace quiccban
 
                 }
             }
-            catch(Exception e)
+            catch
             {
                 Logger.LogCritical("Failed to generate/load database. Exiting.");
                 Environment.Exit(0);
@@ -124,7 +126,7 @@ namespace quiccban
 
             app.UseSpa(spa =>
             {
-                spa.Options.SourcePath = "ClientApp";
+                spa.Options.SourcePath = Path.Combine(Assembly.GetEntryAssembly().Location, "ClientApp");
 
                 if (env.IsDevelopment())
                 {
