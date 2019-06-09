@@ -77,7 +77,7 @@ namespace quiccban
             
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = Path.Combine(Assembly.GetEntryAssembly().Location, "../ClientApp/build");
+                configuration.RootPath = "ClientApp/build";
             });
 
 
@@ -126,7 +126,7 @@ namespace quiccban
 
             app.UseSpa(spa =>
             {
-                spa.Options.SourcePath = Path.Combine(Assembly.GetEntryAssembly().Location, "ClientApp");
+                spa.Options.SourcePath = "ClientApp";
 
                 if (env.IsDevelopment())
                 {
