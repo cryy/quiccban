@@ -29,10 +29,10 @@ namespace quiccban
             if (RequiredConfigValues.Any(x => string.IsNullOrWhiteSpace(config.Properties().First(y => y.Name == x).Value.ToString())))
                 return new ConfigResult { IsValid = false, Message = "Required config values are null or empty." };
 
-            if(!bool.TryParse(config.Properties().FirstOrDefault(x => x.Name == "allowMentionPrefix").ToString(), out bool allowMentionPrefix))
+            if (!bool.TryParse(config.GetValue("allowMentionPrefix").Value<string>(), out bool allowMentionPrefix))
                 return new ConfigResult { IsValid = false, Message = "\"allowMentionPrefix\" has to be either \"true\" or \"false\"" };
 
-            if (!bool.TryParse(config.Properties().FirstOrDefault(x => x.Name == "useOAuth").ToString(), out bool useOAuth))
+            if (!bool.TryParse(config.GetValue("useOAuth").Value<string>(), out bool useOAuth))
                 return new ConfigResult { IsValid = false, Message = "\"useOAuth\" has to be either \"true\" or \"false\"" };
 
 
