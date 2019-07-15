@@ -1,6 +1,7 @@
 using Discord.Addons.Interactive;
 using Humanizer.Configuration;
 using Humanizer.DateTimeHumanizeStrategy;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -21,42 +22,65 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using AspNet.Security.OAuth.Discord;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 
 namespace quiccban
 {
     public class Startup
     {
-        public Startup(ILogger logger)
+        public Startup(ILogger logger, Config config)
         {
             Logger = logger;
+            Config = config;
         }
 
         public ILogger Logger;
+        public Config Config;
 
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var configJObject = JObject.Parse(File.ReadAllText(Program.dataPath + "/config.json"));
-
-            var configResult = configJObject.ParseConfig();
-            if (!configResult.IsValid)
-            {
-                Logger.LogError($"Failed to parse config: {configResult.Message}");
-                Console.ReadKey();
-                Environment.Exit(13);
-            }
 
             Configurator.DateTimeOffsetHumanizeStrategy = new PrecisionDateTimeOffsetHumanizeStrategy(.5);
 
-            var commandService = new CommandService(new CommandServiceConfiguration {
+            var commandService = new CommandService(new CommandServiceConfiguration
+            {
                 IgnoreExtraArguments = true
             });
             var responseService = new ResponseService(Logger);
 
             if (File.Exists(Program.dataPath + "/responses.json"))
                 responseService.Load();
-            
-            services.AddSingleton(configResult.ParsedConfig);
+
+            services.AddResponseCompression();
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.ExpireTimeSpan = new TimeSpan(7, 0, 0, 0);
+                }).AddOAuth<DiscordAuthenticationOptions, DiscordAuthenticationHandler>(DiscordAuthenticationDefaults.AuthenticationScheme, options =>
+                {
+                    options.ClaimActions.DeleteClaims(ClaimTypes.NameIdentifier, ClaimTypes.Name);
+                    options.ClaimActions.MapJsonKey(claimType: "id", jsonKey: "id");
+                    options.ClaimActions.MapJsonKey(claimType: "username", jsonKey: "username");
+                    options.ClaimActions.MapJsonKey(claimType: "discriminator", jsonKey: "discriminator");
+                    options.ClaimActions.MapJsonKey(claimType: "avatarHash", jsonKey: "avatar");
+                    options.ClaimActions.MapJsonKey(claimType: "flags", jsonKey: "flags");
+                    options.ClaimActions.MapJsonKey(claimType: "premiumType", jsonKey: "premium_type");
+
+                    options.ClientId = Config.ClientId.Value.ToString();
+                    options.ClientSecret = Config.ClientSecret;
+                    options.CallbackPath = "/discord-auth";
+                    
+
+                    options.Scope.Add("identify");
+
+
+                });
             services.AddSingleton(commandService);
             services.AddSingleton(responseService);
             services.AddSingleton((provider) => new DiscordService(provider));
@@ -72,9 +96,10 @@ namespace quiccban
             services.AddDbContext<GuildStorage>(ServiceLifetime.Transient);
 
 
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            
+
             services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = "ClientApp/build";
@@ -105,6 +130,16 @@ namespace quiccban
 
             app.ApplicationServices.GetService<DiscordService>();
 
+            var options = new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            };
+
+            app.UseForwardedHeaders(options);
+
+            app.UseAuthentication();
+            app.UseResponseCompression();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -133,6 +168,7 @@ namespace quiccban
                     spa.UseReactDevelopmentServer(npmScript: "start");
                 }
             });
+
         }
     }
 }

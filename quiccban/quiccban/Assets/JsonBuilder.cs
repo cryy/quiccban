@@ -11,7 +11,9 @@ namespace quiccban.Assets
         public static JObject DefaultJsonConfig() => new JsonBuilder().AddField("discordToken", "")
                                                                       .AddField("prefix", "")
                                                                       .AddField("allowMentionPrefix", true)
-                                                                      .AddField("useOAuth", false)
+                                                                      .AddField("useWebUI", false)
+                                                                      .AddField("clientSecret", "")
+                                                                      .AddField("clientId", "")
                                                                       .GetPrototype();
 
 

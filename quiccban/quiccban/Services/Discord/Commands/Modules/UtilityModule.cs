@@ -44,7 +44,7 @@ namespace quiccban.Services.Discord.Commands.Modules
 
 
             List<Embed> embeds = new List<Embed>();
-            var historyGrouping = history.Select((@case, index) => new { Case = @case, Index = index }).GroupBy(x => x.Index / 5, x => x.Case);
+            var historyGrouping = history.OrderByDescending(x => x.Id).Select((@case, index) => new { Case = @case, Index = index }).GroupBy(x => x.Index / 5, x => x.Case);
 
             foreach (var group in historyGrouping)
                 embeds.Add(await _helperService.ConstructHistoryEmbedAsync(group, u));
