@@ -4,11 +4,11 @@ import { RouteComponentProps } from 'react-router';
 import { User } from '../App';
 import { Typography } from '@material-ui/core';
 
-export interface H extends RouteComponentProps {
+export interface HomeProps extends RouteComponentProps {
     user?: User;
 }
 
-export default function Home(props: H) {
+export default function Home(props: HomeProps) {
 
     if (!props.user)
         return <Login />;

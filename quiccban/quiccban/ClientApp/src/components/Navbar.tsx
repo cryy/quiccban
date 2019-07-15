@@ -36,11 +36,11 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-interface hhh {
+interface NavbarProps {
     user?: User;
 }
 
-export default function Navbar(props: hhh) {
+export default function Navbar(props: NavbarProps) {
     const classes = useStyles();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
