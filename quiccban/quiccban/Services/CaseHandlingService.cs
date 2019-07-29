@@ -139,7 +139,7 @@ namespace quiccban.Services
                 var helperService = _serviceProvider.GetService<HelperService>();
                 var dbguild = guildCase.Guild;
 
-                var modlogChannel = discordService.discordClient.GetChannel(dbguild.LogChannelId) as SocketTextChannel;
+                var modlogChannel = discordService.discordClient.GetChannel(dbguild.ModlogChannelId) as SocketTextChannel;
                 if (modlogChannel == null)
                     throw new NullReferenceException("Log channel has been deleted.");
 

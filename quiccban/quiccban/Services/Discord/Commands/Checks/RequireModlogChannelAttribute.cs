@@ -10,7 +10,7 @@ using Humanizer;
 namespace quiccban.Services.Discord.Commands
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
-    public class RequireLogChannelAttribute : CheckBaseAttribute
+    public class RequireModlogChannelAttribute : CheckBaseAttribute
     {
         public override async Task<CheckResult> CheckAsync(ICommandContext ctx, IServiceProvider services)
         {
@@ -22,27 +22,27 @@ namespace quiccban.Services.Discord.Commands
 
             var dbGuild = await dbService.GetOrCreateGuildAsync(context.Guild);
 
-            if (dbGuild.LogChannelId == 0)
-                return new CheckResult(string.Format(responseService.Get("require_log_channel"), config.Prefix));
+            if (dbGuild.ModlogChannelId == 0)
+                return new CheckResult(string.Format(responseService.Get("require_modlog_channel"), config.Prefix));
 
-            var channel = context.Guild.GetTextChannel(dbGuild.LogChannelId);
+            var channel = context.Guild.GetTextChannel(dbGuild.ModlogChannelId);
 
             if(channel == null)
-                return new CheckResult(string.Format(responseService.Get("log_channel_doesnt_exist")));
+                return new CheckResult(string.Format(responseService.Get("modlog_channel_doesnt_exist")));
 
             ChannelPermissions perms = context.Guild.CurrentUser.GetPermissions(channel);
 
             if(!perms.Has(ChannelPermission.SendMessages))
-                return new CheckResult(string.Format(responseService.Get("require_log_channel_permission"), channel.Name, channel.Mention, ChannelPermission.SendMessages.Humanize()));
+                return new CheckResult(string.Format(responseService.Get("require_modlog_channel_permission"), channel.Name, channel.Mention, ChannelPermission.SendMessages.Humanize()));
 
             if (!perms.Has(ChannelPermission.ViewChannel))
-                return new CheckResult(string.Format(responseService.Get("require_log_channel_permission"), channel.Name, channel.Mention, ChannelPermission.ViewChannel.Humanize()));
+                return new CheckResult(string.Format(responseService.Get("require_modlog_channel_permission"), channel.Name, channel.Mention, ChannelPermission.ViewChannel.Humanize()));
 
             if (!perms.Has(ChannelPermission.ReadMessageHistory))
-                return new CheckResult(string.Format(responseService.Get("require_log_channel_permission"), channel.Name, channel.Mention, ChannelPermission.ReadMessageHistory.Humanize()));
+                return new CheckResult(string.Format(responseService.Get("require_modlog_channel_permission"), channel.Name, channel.Mention, ChannelPermission.ReadMessageHistory.Humanize()));
 
             if (!perms.Has(ChannelPermission.EmbedLinks))
-                return new CheckResult(string.Format(responseService.Get("require_log_channel_permission"), channel.Name, channel.Mention, ChannelPermission.EmbedLinks.Humanize()));
+                return new CheckResult(string.Format(responseService.Get("require_modlog_channel_permission"), channel.Name, channel.Mention, ChannelPermission.EmbedLinks.Humanize()));
 
             return CheckResult.Successful;
         }

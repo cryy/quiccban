@@ -49,12 +49,8 @@ namespace quiccban.Services
             {"spam_automod_update_already_same", "Spam AutoMod is already {0}." },
             {"spam_automod_update_success", "Spam AutoMod has been {0}." },
             {"require_spam_automod_for_modification", "Spam AutoMod has to be enabled to modify this." },
-            {"spam_threshold_already_same", "Spam AutoMod's threshold is already set to {0}." },
-            {"spam_threshold_success", "Spam AutoMod's message threshold has been set to {0}." },
-            {"spam_action_already_same", "Spam AutoMod's action is already set to {0}." },
-            {"spam_action_success", "Spam AutoMod's threshold action has been set to {0} with {1}." },
-            {"log_channel_already_same", "Logging channel is already set to {1}." },
-            {"log_channel_success", "Logging channel has been set to {1}." },
+            {"modlog_channel_already_same", "Moderation logging channel is already set to {1}." },
+            {"modlog_channel_success", "Moderation logging channel has been set to {1}." },
             {"log_style_already_same", "Logging style is already set to {0}." },
             {"log_style_success", "Logging style has been set to {0}." },
             {"warn_expiry_already_same", "Warn expiry is already set to {0}." },
@@ -69,9 +65,9 @@ namespace quiccban.Services
             {"require_channel_permission", "You require channel permission {0} to do this." },
             {"bot_require_guild_permission", "I require guild permission {0} to do this." },
             {"bot_require_channel_permission", "I require channel permission {0} to do this." },
-            {"require_log_channel", "A logging channel must be defined to use this. Ask an admin to set a logging channel via ``{0}config set logchannel <channel>``" },
-            {"log_channel_doesnt_exist", "Couldn't find the log channel. Log channel must be set to do moderation actions." },
-            {"require_log_channel_permission", "I require {2} permission in {1}." },
+            {"require_modlog_channel", "A moderation logging channel must be defined to use this. Ask an admin to set a logging channel via ``{0}config set modlogchannel <channel>``" },
+            {"modlog_channel_doesnt_exist", "Couldn't find the modlog channel. Modlog channel must be set to do moderation actions." },
+            {"require_modlog_channel_permission", "I require {2} permission in {1}." },
             {"require_higher_equal_hierarchy", "You can't do moderator actions on that user." },
             {"require_higher_hierarchy", "You can't do moderator actions on that user." },
             {"bot_require_higher_equal_hierarchy", "I can't do moderator actions on that user." },
@@ -96,7 +92,7 @@ namespace quiccban.Services
         {
             lock (_loadLock)
             {
-                if (!File.Exists(Program.dataPath + "/responses.json"))
+                if (!File.Exists(Path.Combine(Program.dataPath, "responses.json")))
                     throw new FileNotFoundException("responses.json does not exist.");
 
                 JObject json;

@@ -71,25 +71,21 @@ namespace quiccban.Services
             var sb = new StringBuilder();
             sb.AppendLine($"Showing config values for ``{guild.Name}``");
             sb.AppendLine("");
-            sb.AppendLine($"\u200b   ⚙**AutoMod**:");
-            sb.AppendLine($"\u200b         ⚙**Enabled**: {dbGuild.AutoMod.Enabled}");
+            sb.AppendLine($"\u200b\u2007⚙**AutoMod**:");
+            sb.AppendLine($"\u2007\u3000⚙**Enabled**: {dbGuild.AutoMod.Enabled}");
             if (dbGuild.AutoMod.Enabled)
             {
-                sb.AppendLine($"\u200b         ⚙**Spam AutoMod**: ");
-                sb.AppendLine($"\u200b               ⚙**Enabled**: {dbGuild.AutoMod.SpamEnabled}");
-                sb.AppendLine($"\u200b               ⚙**Message Threshold**: {dbGuild.AutoMod.SpamMessageThreshold}");
-                sb.AppendLine($"\u200b               ⚙**Threshold Action**: {dbGuild.AutoMod.SpamActionType.Humanize()}");
-                if (dbGuild.AutoMod.SpamActionExpiry > 0)
-                    sb.AppendLine($"\u200b               ⚙**Spam Action Expiry**: {TimeSpan.FromSeconds(dbGuild.AutoMod.SpamActionExpiry).Humanize()}");
+                sb.AppendLine($"\u2007\u3000⚙**Spam AutoMod**: ");
+                sb.AppendLine($"\u2007\u3000⚙**Raid AutoMod**: ");
             }
-            sb.AppendLine($"\u200b   ⚙**Log Channel**: {(dbGuild.LogChannelId != 0 ? $"<#{dbGuild.LogChannelId}>" : "Not set")}");
-            sb.AppendLine($"\u200b   ⚙**Logging Style**: {dbGuild.LogStyle}");
-            sb.AppendLine($"\u200b   ⚙**Warns**:");
-            sb.AppendLine($"\u200b         ⚙**Expiry**: {TimeSpan.FromSeconds(dbGuild.WarnExpiry).Humanize()}");
-            sb.AppendLine($"\u200b         ⚙**Threshold**: {dbGuild.WarnThreshold}");
-            sb.AppendLine($"\u200b         ⚙**Threshold Action**: {dbGuild.WarnThresholdActionType.Humanize()}");
+            sb.AppendLine($"\u2007⚙**Modlog Channel**: {(dbGuild.ModlogChannelId != 0 ? $"<#{dbGuild.ModlogChannelId}>" : "Not set")}");
+            sb.AppendLine($"\u2007⚙**Logging Style**: {dbGuild.LogStyle}");
+            sb.AppendLine($"\u2007⚙**Warns**:");
+            sb.AppendLine($"\u2007\u3000⚙**Expiry**: {TimeSpan.FromSeconds(dbGuild.WarnExpiry).Humanize()}");
+            sb.AppendLine($"\u2007\u3000⚙**Threshold**: {dbGuild.WarnThreshold}");
+            sb.AppendLine($"\u2007\u3000⚙**Threshold Action**: {dbGuild.WarnThresholdActionType.Humanize()}");
             if (dbGuild.WarnThresholdActionExpiry > 0)
-                sb.AppendLine($"\u200b         ⚙**Threshold Action Expiry**: {TimeSpan.FromSeconds(dbGuild.WarnThresholdActionExpiry).Humanize()}");
+                sb.AppendLine($"\u2007\u3000\u3000⚙**Threshold Action Expiry**: {TimeSpan.FromSeconds(dbGuild.WarnThresholdActionExpiry).Humanize()}");
 
             return sb.ToString();
         }

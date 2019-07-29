@@ -77,7 +77,7 @@ namespace quiccban.Services
                 {
                     var dbGuild = await guildStorage.GetOrCreateGuildAsync(guild.Id);
 
-                    if (dbGuild.LogChannelId == 0)
+                    if (dbGuild.ModlogChannelId == 0)
                         throw new InvalidOperationException("Can't create a new case without a log channel.");
 
                     Case @case = new Case
@@ -114,7 +114,7 @@ namespace quiccban.Services
 
                     var discordService = _serviceProvider.GetService<DiscordService>();
 
-                    var logChannel = discordService.discordClient.GetChannel(dbGuild.LogChannelId) as SocketTextChannel;
+                    var logChannel = discordService.discordClient.GetChannel(dbGuild.ModlogChannelId) as SocketTextChannel;
 
                     if(logChannel == null)
                         throw new InvalidOperationException("Can't log to a channel that doesn't exist");

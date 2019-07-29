@@ -11,7 +11,7 @@ namespace quiccban.Database.Models
         public ulong Id { get; set; }
 
         public ulong MuteRoleId { get; set; }
-        public ulong LogChannelId { get; set; }
+        public ulong ModlogChannelId { get; set; }
 
         public LogStyle LogStyle { get; set; }
 
@@ -76,7 +76,7 @@ namespace quiccban.Database.Models
             if (DiscordMessageId == 0)
                 return null;
 
-            return $"https://discordapp.com/channels/{GuildId}/{Guild.LogChannelId}/{DiscordMessageId}";
+            return $"https://discordapp.com/channels/{GuildId}/{Guild.ModlogChannelId}/{DiscordMessageId}";
         }
 
     }
@@ -87,9 +87,7 @@ namespace quiccban.Database.Models
         public bool Enabled { get; set; }
 
         public bool SpamEnabled { get; set; }
-        public int SpamMessageThreshold { get; set; }
-        public ActionType SpamActionType { get; set; }
-        public int SpamActionExpiry { get; set; }
+        public bool RaidEnabled { get; set; }
 
     }
 

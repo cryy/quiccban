@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -18,7 +19,7 @@ namespace quiccban.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite($"Data Source=\"{Program.dataPath + "/database.db"}\"");
+            optionsBuilder.UseSqlite($"Data Source=\"{Path.Combine(Program.dataPath, ".db")}\"");
         }
 
 
@@ -69,7 +70,7 @@ namespace quiccban.Database
 
         private async Task<Guild> CreateGuildAsync(ulong guildId)
         {
-            var newGuild = new Guild { Id = guildId, AutoMod = new AutoMod { Enabled = true, SpamEnabled = true, SpamActionType = Models.ActionType.Warn, SpamMessageThreshold = 5} };
+            var newGuild = new Guild { Id = guildId, AutoMod = new AutoMod { Enabled = true, SpamEnabled = true, RaidEnabled = true} };
 
             await Guilds.AddAsync(newGuild);
 

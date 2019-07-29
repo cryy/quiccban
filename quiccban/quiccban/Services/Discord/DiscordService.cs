@@ -81,7 +81,6 @@ namespace quiccban.Services.Discord
                     int failedCaseAdds = 0;
                     foreach(var guildCase in unexpiredCases)
                     {
-                        Console.WriteLine($"caching {guildCase.Id}");
                         if (!_caseHandlingService.TryAdd(guildCase))
                             failedCaseAdds++;
                     }
@@ -94,7 +93,6 @@ namespace quiccban.Services.Discord
 
                     foreach (var guildCase in unresolvedExpiredCases)
                     {
-                        Console.WriteLine($"resolving {guildCase.Id}");
                         await _caseHandlingService.ResolveAsync(guildCase, null, null, false, false);
                     }
                    
@@ -110,7 +108,7 @@ namespace quiccban.Services.Discord
 
                 if (CommandUtilities.HasAnyPrefix(msg.Content, _prefixes, StringComparison.OrdinalIgnoreCase, out string pfx, out string output))
                 {
-                    var context = new QuiccbanContext(discordClient, msg);
+                    var context = new QuiccbanContext(discordClient, msg, _serviceProvider);
                     var result = await _commands.ExecuteAsync(output, context, _serviceProvider);
 
                     if (result is QuiccbanSuccessResult success && !string.IsNullOrWhiteSpace(success.ReplyValue))
@@ -124,12 +122,6 @@ namespace quiccban.Services.Discord
 
                     if(result is ParameterChecksFailedResult paramCheckFail)
                         await context.Channel.SendMessageAsync(paramCheckFail.FailedChecks.FirstOrDefault().Error);
-
-                    if (result is FailedResult r)
-                        Console.WriteLine(r);
-
-                    if (result is ExecutionFailedResult rr)
-                        Console.WriteLine(rr.Exception);
                 }
 
 

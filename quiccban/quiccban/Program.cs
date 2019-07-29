@@ -38,10 +38,23 @@ namespace quiccban
                 if (!Directory.Exists(dataPath))
                     Directory.CreateDirectory(dataPath);
 
-                if (!File.Exists(dataPath + "/config.json"))
+                if (!File.Exists(Path.Combine(dataPath, "config.json")))
                     await CreateConfig();
 
-                var configJObject = JObject.Parse(File.ReadAllText(dataPath + "/config.json"));
+                dbcreation:
+                if (!File.Exists(Path.Combine(dataPath, ".db")))
+                {
+                    File.Create(Path.Combine(dataPath, ".db")).Close();
+                    File.SetAttributes(Path.Combine(dataPath, ".db"), FileAttributes.Hidden);
+                }
+                else if (args.Contains("restartdb"))
+                {
+                    File.Delete(Path.Combine(dataPath, ".db"));
+                    goto dbcreation;
+                }
+
+
+                var configJObject = JObject.Parse(File.ReadAllText(Path.Combine(dataPath, "config.json")));
 
                 var configResult = configJObject.ParseConfig();
                 if (!configResult.IsValid)
@@ -56,7 +69,7 @@ namespace quiccban
 
                 var webhost = CreateWebHostBuilder(args).Build();
 
-                if (_config.UseWebUI)
+                if (_config.Web.Enabled)
                 {
                     var addresser = webhost.ServerFeatures.FirstOrDefault(x => x.Value is IServerAddressesFeature).Value as IServerAddressesFeature;
 
@@ -90,16 +103,16 @@ namespace quiccban
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .SuppressStatusMessages(true)
-                .ConfigureServices(x => { x.AddSingleton(_config); x.AddSingleton(typeof(ILogger), _logger); })
+                .ConfigureServices(x => { x.AddSingleton(typeof(Config), _config); x.AddSingleton(typeof(ILogger), _logger); })
                 .ConfigureLogging(x => {
                     x.ClearProviders();
                     x.AddProvider(new LoggingProvider());
 
-                    if(!x.Services.BuildServiceProvider().GetService<IHostingEnvironment>().IsDevelopment())
+                    if (!x.Services.BuildServiceProvider().GetService<IHostingEnvironment>().IsDevelopment())
                         x.AddFilter("Microsoft", LogLevel.Warning);
 
                 })
-                .UseUrls((args.Length > 0 ? (ushort.TryParse(args[0], out ushort port) ? $"http://*:{port}" : "http://*:3300") : "http://*:3300"))
+                .UseUrls(_config.Web.Ports == null ? new string[] { } : _config.Web.Ports.Select(x => $"http://*:{x}").ToArray())
                 .UseStartup<Startup>();
     }
 }

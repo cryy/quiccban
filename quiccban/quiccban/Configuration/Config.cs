@@ -1,29 +1,39 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using NJsonSchema.Annotations;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace quiccban
 {
-    public class Config
+    public struct Config
     {
-        public string DiscordToken { get; }
-        public string Prefix { get; }
-        public bool AllowMentionPrefix { get; }
-        public bool UseWebUI { get; }
-        public string ClientSecret { get; }
-        public ulong? ClientId { get; }
+        [Required]
+        [JsonProperty("discordToken")]
+        public string DiscordToken { get; set; }
+        [Required]
+        [JsonProperty("prefix")]
+        public string Prefix { get; set; }
+        [Required]
+        [JsonProperty("allowMentionPrefix")]
+        public bool AllowMentionPrefix { get; set; }
+        [Required]
+        [JsonProperty("webUI")]
+        public WebUI Web { get; set;  }
+    }
 
-        public Config(string token, string prefix, bool mentionPrefix, bool useWeb, string clientSecret, ulong? clientId)
-        {
-            DiscordToken = token;
-            Prefix = prefix;
-            AllowMentionPrefix = mentionPrefix;
-            UseWebUI = useWeb;
-            ClientSecret = clientSecret;
-            ClientId = clientId;
-        }
-
-
+    public struct WebUI
+    {
+        [Required]
+        [JsonProperty("enabled")]
+        public bool Enabled { get; set; }
+        [JsonProperty("ports")]
+        public ushort[] Ports { get; set; }
+        [JsonProperty("clientSecret")]
+        public string ClientSecret { get; set; }
+        [JsonProperty("clientId")]
+        public string ClientId { get; set; }
     }
 }

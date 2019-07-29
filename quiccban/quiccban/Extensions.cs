@@ -1,5 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Humanizer;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NJsonSchema;
+using NJsonSchema.Generation;
 using quiccban.API.Entities;
 using quiccban.Services.Discord;
 using System;
@@ -24,50 +28,29 @@ namespace quiccban
 
         public static ConfigResult ParseConfig(this JObject config)
         {
+            var validator = JsonSchema.FromType<Config>(new JsonSchemaGeneratorSettings { AlwaysAllowAdditionalObjectProperties = true});
+            
 
-            string clientSecret = null;
-            ulong? clientIdNullable = null;
+            var validationResult = validator.Validate(config);
 
-            if (!RequiredConfigValues.All(x => config.Properties().Any(y => y.Name == x)))
-                return new ConfigResult { IsValid = false, Message = "Required config values are missing." };
+            if (validationResult.Count > 0)
+                return new ConfigResult { IsValid = false, Message = "\n\t\t\t\t" + string.Join("\n\t\t\t\t", validationResult.Select(x => $"Line {x.LineNumber} | {x.Kind.Humanize()} (p: {x.Path})")) };
 
-            if (RequiredConfigValues.Any(x => string.IsNullOrWhiteSpace(config.Properties().First(y => y.Name == x).Value.ToString())))
-                return new ConfigResult { IsValid = false, Message = "Required config values are null or empty." };
+            var configObject = JsonConvert.DeserializeObject<Config>(config.ToString());
 
-            if (!bool.TryParse(config.GetValue("allowMentionPrefix").Value<string>(), out bool allowMentionPrefix))
-                return new ConfigResult { IsValid = false, Message = "\"allowMentionPrefix\" has to be either \"true\" or \"false\"" };
-
-            if (!bool.TryParse(config.GetValue("useWebUI").Value<string>(), out bool useWebUI))
-                return new ConfigResult { IsValid = false, Message = "\"useWebUI\" has to be either \"true\" or \"false\"" };
-
-            if (useWebUI)
+            if (configObject.Web.Enabled)
             {
-                if (config.Properties().Any(x => x.Name == "clientId"))
-                {
-                    if (!ulong.TryParse(config.GetValue("clientId").Value<string>(), out ulong clientId))
-                        return new ConfigResult { IsValid = false, Message = "Web UI is turned on, couldn't parse \"clientId\"." };
-                    else clientIdNullable = clientId;
-                }
-                else
-                    return new ConfigResult { IsValid = false, Message = "Web UI is turned on, couldn't find \"clientId\"." };
+                if (configObject.Web.Ports is null || configObject.Web.Ports.Length == 0)
+                    return new ConfigResult { IsValid = false, Message = "Web UI ports aren't defined." };
 
+                if (string.IsNullOrWhiteSpace(configObject.Web.ClientId))
+                    return new ConfigResult { IsValid = false, Message = "Web UI client id isn't defined." };
 
-                if (config.Properties().Any(x => x.Name == "clientSecret"))
-                {
-                    if (string.IsNullOrWhiteSpace(config.GetValue("clientSecret").Value<string>()))
-                        return new ConfigResult { IsValid = false, Message = "Web UI is turned on, but \"clientSecret\" is null or empty." };
-                    else clientSecret = config.GetValue("clientSecret").Value<string>();
-                }
-                else
-                    return new ConfigResult { IsValid = false, Message = "Web UI is turned on, couldn't find \"clientSecret\"." };
+                if (string.IsNullOrWhiteSpace(configObject.Web.ClientSecret))
+                    return new ConfigResult { IsValid = false, Message = "Web UI client secret isn't defined." };
             }
 
-
-            return new ConfigResult
-            {
-                IsValid = true,
-                ParsedConfig = new Config(config.GetValue("discordToken").Value<string>(), config.GetValue("prefix").Value<string>(), allowMentionPrefix, useWebUI, clientSecret, clientIdNullable)
-            };
+            return new ConfigResult { IsValid = true, ParsedConfig = configObject };
         }
 
         public static async Task<SelfUser> ToSelfUserAsync(this IEnumerable<Claim> claims, DiscordService discordService)

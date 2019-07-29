@@ -50,7 +50,7 @@ namespace quiccban
 
             var commandService = new CommandService(new CommandServiceConfiguration
             {
-                IgnoreExtraArguments = true
+                IgnoreExtraArguments = true,
             });
             var responseService = new ResponseService(Logger);
 
@@ -72,8 +72,8 @@ namespace quiccban
                     options.ClaimActions.MapJsonKey(claimType: "flags", jsonKey: "flags");
                     options.ClaimActions.MapJsonKey(claimType: "premiumType", jsonKey: "premium_type");
 
-                    options.ClientId = Config.ClientId.Value.ToString();
-                    options.ClientSecret = Config.ClientSecret;
+                    options.ClientId = Config.Web.ClientId.ToString();
+                    options.ClientSecret = Config.Web.ClientSecret;
                     options.CallbackPath = "/discord-auth";
                     
 

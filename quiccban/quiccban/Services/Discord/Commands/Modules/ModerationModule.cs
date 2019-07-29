@@ -14,7 +14,7 @@ using quiccban.Services.Discord.Commands.Objects;
 
 namespace quiccban.Services.Discord.Commands.Modules
 {
-    [RequireLogChannel]
+    [RequireModlogChannel]
     [RequireBotPermission(ChannelPermission.SendMessages)]
     public class ModerationModule : QuiccbanModule<QuiccbanContext>
     {
