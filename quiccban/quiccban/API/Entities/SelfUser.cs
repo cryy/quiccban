@@ -7,7 +7,7 @@ namespace quiccban.API.Entities
 {
     public struct SelfUser
     {
-        public ulong Id;
+        public string Id;
         public string Username;
         public ushort Discriminator;
         public string AvatarHash;

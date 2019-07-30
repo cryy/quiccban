@@ -65,40 +65,43 @@ namespace quiccban.Services.Discord
 
             discordClient.Ready += async () =>
             {
-                _logger.LogInformation($"Logged into Discord as \"{discordClient.CurrentUser}\" in {discordClient.Guilds.Count} guild{(discordClient.Guilds.Count > 1 ? "s" : "")}.");
-
-                LoadCommands();
-
-                var guildStorage = _serviceProvider.GetService<GuildStorage>();
-
-                var dbGuilds = await guildStorage.GetAllGuildsAsync();
-
-                foreach(var guild in dbGuilds)
+                if (!IsReady)
                 {
+                    _logger.LogInformation($"Logged into Discord as \"{discordClient.CurrentUser}\" in {discordClient.Guilds.Count} guild{(discordClient.Guilds.Count > 1 ? "s" : "")}.");
 
-                    var unexpiredCases = guild.Cases.Where(x => (x.GetEndingTime() > DateTimeOffset.UtcNow && x.ActionType != ActionType.Warn) || (x.ActionType == ActionType.Warn && x.GetWarnEndingTime() > DateTimeOffset.UtcNow));
+                    LoadCommands();
 
-                    int failedCaseAdds = 0;
-                    foreach(var guildCase in unexpiredCases)
+                    var guildStorage = _serviceProvider.GetService<GuildStorage>();
+
+                    var dbGuilds = await guildStorage.GetAllGuildsAsync();
+
+                    foreach (var guild in dbGuilds)
                     {
-                        if (!_caseHandlingService.TryAdd(guildCase))
-                            failedCaseAdds++;
+
+                        var unexpiredCases = guild.Cases.Where(x => (x.GetEndingTime() > DateTimeOffset.UtcNow && x.ActionType != ActionType.Warn) || (x.ActionType == ActionType.Warn && x.GetWarnEndingTime() > DateTimeOffset.UtcNow));
+
+                        int failedCaseAdds = 0;
+                        foreach (var guildCase in unexpiredCases)
+                        {
+                            if (!_caseHandlingService.TryAdd(guildCase))
+                                failedCaseAdds++;
+                        }
+
+                        if (failedCaseAdds > 0)
+                            _logger.LogWarning($"Failed to add {failedCaseAdds} cases to in-memory cache.");
+
+                        //resolve all cases that had expired
+                        var unresolvedExpiredCases = guild.Cases.Where(x => !x.Resolved && ((x.ActionType != ActionType.Warn && x.GetEndingTime() <= DateTimeOffset.UtcNow) || (x.GetWarnEndingTime() <= DateTimeOffset.UtcNow && x.ActionType == ActionType.Warn)));
+
+                        foreach (var guildCase in unresolvedExpiredCases)
+                        {
+                            await _caseHandlingService.ResolveAsync(guildCase, null, null, false, false);
+                        }
+
                     }
 
-                    if (failedCaseAdds > 0)
-                        _logger.LogWarning($"Failed to add {failedCaseAdds} cases to in-memory cache.");
-
-                    //resolve all cases that had expired
-                    var unresolvedExpiredCases = guild.Cases.Where(x => !x.Resolved && ((x.ActionType != ActionType.Warn && x.GetEndingTime() <= DateTimeOffset.UtcNow )|| (x.GetWarnEndingTime() <= DateTimeOffset.UtcNow && x.ActionType == ActionType.Warn)));
-
-                    foreach (var guildCase in unresolvedExpiredCases)
-                    {
-                        await _caseHandlingService.ResolveAsync(guildCase, null, null, false, false);
-                    }
-                   
+                    IsReady = true;
                 }
-
-                IsReady = true;
             };
 
             discordClient.MessageReceived += async (m) =>

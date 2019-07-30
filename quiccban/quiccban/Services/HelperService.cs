@@ -75,8 +75,8 @@ namespace quiccban.Services
             sb.AppendLine($"\u2007\u3000⚙**Enabled**: {dbGuild.AutoMod.Enabled}");
             if (dbGuild.AutoMod.Enabled)
             {
-                sb.AppendLine($"\u2007\u3000⚙**Spam AutoMod**: ");
-                sb.AppendLine($"\u2007\u3000⚙**Raid AutoMod**: ");
+                sb.AppendLine($"\u2007\u3000⚙**Spam AutoMod**: {(dbGuild.AutoMod.SpamEnabled == true ? "Enabled" : "Disabled")}");
+                sb.AppendLine($"\u2007\u3000⚙**Raid AutoMod**: {(dbGuild.AutoMod.RaidEnabled == true ? "Enabled" : "Disabled")}");
             }
             sb.AppendLine($"\u2007⚙**Modlog Channel**: {(dbGuild.ModlogChannelId != 0 ? $"<#{dbGuild.ModlogChannelId}>" : "Not set")}");
             sb.AppendLine($"\u2007⚙**Logging Style**: {dbGuild.LogStyle}");

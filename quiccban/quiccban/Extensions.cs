@@ -56,17 +56,17 @@ namespace quiccban
         public static async Task<SelfUser> ToSelfUserAsync(this IEnumerable<Claim> claims, DiscordService discordService)
         {
             var appInfo = await discordService.discordClient.GetApplicationInfoAsync();
-            var idClaimParsed = ulong.Parse(claims.FirstOrDefault(x => x.Type == "id").Value);
+            var id = claims.FirstOrDefault(x => x.Type == "id").Value;
             var premiumTypeClaim = claims.FirstOrDefault(x => x.Type == "premiumType");
 
             return new SelfUser
             {
                 AvatarHash = claims.FirstOrDefault(x => x.Type == "avatarHash").Value,
-                Id = idClaimParsed,
+                Id = id,
                 Username = claims.FirstOrDefault(x => x.Type == "username").Value,
                 Discriminator = ushort.Parse(claims.FirstOrDefault(x => x.Type == "discriminator").Value),
                 Flags = ushort.Parse(claims.FirstOrDefault(x => x.Type == "flags").Value),
-                IsBotOwner = appInfo.Owner.Id == idClaimParsed,
+                IsBotOwner = appInfo.Owner.Id.ToString() == id,
                 PremiumType = premiumTypeClaim == null ? null : new ushort?(ushort.Parse(premiumTypeClaim.Value)),
             };
         }
