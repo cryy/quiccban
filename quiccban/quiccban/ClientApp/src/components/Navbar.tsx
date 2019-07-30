@@ -74,7 +74,7 @@ export default function Navbar(props: NavbarProps) {
                                 color="inherit"
                             >
                                 <Avatar
-                                    src={"https://cdn.discordapp.com/avatars/" + props.user.id + "/" + props.user.avatarHash + ".webp?size=128"}
+                                    src={"https://cdn.discordapp.com/avatars/" + props.user.id + "/" + props.user.avatarHash}
                                     style={{
                                         width: "45px",
                                         height: "45px",
