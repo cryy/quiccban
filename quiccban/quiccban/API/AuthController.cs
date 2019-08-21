@@ -14,11 +14,11 @@ namespace quiccban.API
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly OAuthCachingService oAuthCache;
+        OAuthCachingService _oAuthCaching;
 
-        public AuthController(OAuthCachingService oAuthCache)
+        public AuthController(OAuthCachingService oAuthCaching)
         {
-            this.oAuthCache = oAuthCache;
+            _oAuthCaching = oAuthCaching;
         }
 
 
@@ -31,7 +31,7 @@ namespace quiccban.API
         [HttpGet("logout")]
         public async Task<IActionResult> LogOut()
         {
-            oAuthCache.Remove(HttpContext.User.Claims.FirstOrDefault(x => x.Type == "accessToken").Value);
+            _oAuthCaching.Remove(HttpContext.User.Claims.FirstOrDefault(x => x.Type == "accessToken").Value);
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
 
