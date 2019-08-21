@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -31,16 +32,25 @@ namespace quiccban.API
 
             if (User.Identity.IsAuthenticated)
             {
+                try
+                {
+                    var client = await _oAuthCaching.GetOrCreateClient(User.Claims.FirstOrDefault(x => x.Type == "accessToken").Value);
 
-                var client = await _oAuthCaching.GetOrCreateClient(User.Claims.FirstOrDefault(x => x.Type == "accessToken").Value);
-                var guilds = await client.GetGuildSummariesAsync().FlattenAsync();
 
-                return Ok(new SelfUser(client.CurrentUser, guilds));
+                    var guilds = await client.GetGuildSummariesAsync().FlattenAsync();
+                    return Ok(new SelfUser(client.CurrentUser, guilds));
+                }
+                catch
+                {
+                    //user has possibly deauthorized the app so we should log them out 
+                    return LocalRedirect("~/api/auth/logout");
+                }
 
             }
             else
             {
                 return Unauthorized();
+
             }
         }
     }

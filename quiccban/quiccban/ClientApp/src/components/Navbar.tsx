@@ -13,7 +13,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import { Link } from 'react-router-dom';
 import { Avatar, Divider } from '@material-ui/core';
-import { ISelfUser } from '../entities/ISelfUser';
+import { ISelfUser } from '../entities/user/ISelfUser';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({

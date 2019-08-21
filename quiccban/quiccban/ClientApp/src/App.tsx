@@ -44,8 +44,7 @@ export default function App() {
         fetch("/api/context/user", { method: "GET" })
             .then(x => {
                 setTimeout(() => {
-
-                    if (x.status != 200) {
+                    if (x.status != 200 || x.redirected) {
                         setDidFetchData(true);
                     }
                     else (x.json() as Promise<ISelfUser>).then(y => { setUser(y); setDidFetchData(true); });

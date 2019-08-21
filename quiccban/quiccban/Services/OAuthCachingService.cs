@@ -21,7 +21,7 @@ namespace quiccban.Services
         public async Task<DiscordRestClient> GetOrCreateClient(string accessToken) =>
             await cache.GetOrCreateAsync(accessToken, async factory =>
             {
-                factory.AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(7);
+                factory.AbsoluteExpiration = DateTimeOffset.UtcNow.AddDays(1);
 
                 var restClient = new DiscordRestClient();
 
