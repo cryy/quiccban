@@ -26,6 +26,9 @@ namespace quiccban.API
         [HttpGet("user")]
         public async Task<IActionResult> Userinfo()
         {
+            if (!_discordService.IsReady)
+                return StatusCode(503, "Discord client is not ready yet.");
+
             if (User.Identity.IsAuthenticated)
             {
 
