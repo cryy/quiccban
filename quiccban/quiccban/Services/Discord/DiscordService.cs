@@ -29,6 +29,8 @@ namespace quiccban.Services.Discord
 
 
         public DiscordSocketClient discordClient;
+        public static RestApplication ApplicationInfo;
+
         
         public bool IsReady { get; private set; }
 
@@ -67,6 +69,8 @@ namespace quiccban.Services.Discord
             {
                 if (!IsReady)
                 {
+                    ApplicationInfo = await discordClient.GetApplicationInfoAsync();
+
                     _logger.LogInformation($"Logged into Discord as \"{discordClient.CurrentUser}\" in {discordClient.Guilds.Count} guild{(discordClient.Guilds.Count > 1 ? "s" : "")}.");
 
                     LoadCommands();

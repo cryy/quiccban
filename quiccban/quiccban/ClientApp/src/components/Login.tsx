@@ -27,7 +27,7 @@ const useStyle = makeStyles((theme: Theme) =>
 
 export default function Login() {
 
-    const classes = useStyle();
+    const classes = useStyle({});
 
     return (
         <Grid container justify="center" alignItems="center" direction="column" spacing={0}>

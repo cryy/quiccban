@@ -11,9 +11,9 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormGroup from '@material-ui/core/FormGroup';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
-import { User } from '../App';
 import { Link } from 'react-router-dom';
 import { Avatar, Divider } from '@material-ui/core';
+import { ISelfUser } from '../entities/ISelfUser';
 
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
@@ -36,11 +36,11 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface NavbarProps {
-    user?: User;
+    user?: ISelfUser;
 }
 
 export default function Navbar(props: NavbarProps) {
-    const classes = useStyles();
+    const classes = useStyles({});
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -74,7 +74,7 @@ export default function Navbar(props: NavbarProps) {
                                 color="inherit"
                             >
                                 <Avatar
-                                    src={"https://cdn.discordapp.com/avatars/" + props.user.id + "/" + props.user.avatarHash}
+                                    src={props.user.user.avatarUrl}
                                     style={{
                                         width: "45px",
                                         height: "45px",
@@ -90,7 +90,7 @@ export default function Navbar(props: NavbarProps) {
                                 open={open}
                                 onClose={handleClose}
                             >
-                                <Typography>{props.user.username}#{props.user.discriminator}</Typography>
+                                <Typography>{props.user.user.username}#{props.user.user.discriminator}</Typography>
                                 <Divider />
                                 <MenuItem onClick={(e) => window.location.href = "/api/auth/logout"}>Logout</MenuItem>
                             </Menu>

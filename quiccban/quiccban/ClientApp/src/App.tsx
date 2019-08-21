@@ -9,6 +9,7 @@ import Home from './components/Home';
 import { Route, Switch } from 'react-router';
 import Preloader from './components/Preloader';
 import Navbar from './components/Navbar';
+import { ISelfUser } from './entities/user/ISelfUser';
 
 const useStyle = makeStyles((theme: Theme) =>
     createStyles({
@@ -28,14 +29,6 @@ const theme = createMuiTheme({
     }
 });
 
-export interface User {
-    id: string;
-    avatarHash: string;
-    discriminator: string;
-    username: string;
-    flags: number;
-    premiumType?: number;
-}
 
 
 export default function App() {
@@ -43,9 +36,8 @@ export default function App() {
     const [isConnected, setIsConnected] = React.useState(false);
     const [didError, setDidError] = React.useState(false);
     const [didFetchData, setDidFetchData] = React.useState(false);
-    const [user, setUser] = React.useState<User | undefined>(undefined);
+    const [user, setUser] = React.useState<ISelfUser | undefined>(undefined);
 
-    const classes = useStyle();
 
     React.useEffect(() => {
 
@@ -56,7 +48,7 @@ export default function App() {
                     if (x.status != 200) {
                         setDidFetchData(true);
                     }
-                    else (x.json() as Promise<User>).then(y => { setUser(y); setDidFetchData(true); });
+                    else (x.json() as Promise<ISelfUser>).then(y => { setUser(y); setDidFetchData(true); });
                 }, 900);
                 
 

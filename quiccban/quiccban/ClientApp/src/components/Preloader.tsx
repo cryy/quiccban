@@ -1,7 +1,7 @@
 ﻿import * as React from 'react';
 import { Typography, Divider, Button, Grid, makeStyles, createStyles, Theme, CircularProgress } from "@material-ui/core";
 
-const useStyle = makeStyles((theme: Theme) =>
+const useStyle = makeStyles(() =>
     createStyles({
         loader: {
             position: "absolute",
@@ -15,7 +15,7 @@ const useStyle = makeStyles((theme: Theme) =>
 
 export default function Preloader() {
 
-    const classes = useStyle();
+    const classes = useStyle({});
 
 
     return <CircularProgress className={classes.loader} size={180} thickness={1.2} />

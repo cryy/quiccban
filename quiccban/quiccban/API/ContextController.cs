@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Discord;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using quiccban.API.Entities;
+using quiccban.Services;
 using quiccban.Services.Discord;
 using System;
 using System.Collections.Generic;
@@ -12,9 +16,11 @@ namespace quiccban.API
     public class ContextController : ControllerBase
     {
         DiscordService _discordService;
-        public ContextController(DiscordService discordService)
+        OAuthCachingService _oAuthCaching;
+        public ContextController(DiscordService discordService, OAuthCachingService oAuthCaching)
         {
             _discordService = discordService;
+            _oAuthCaching = oAuthCaching;
         }
 
         [HttpGet("user")]
@@ -22,9 +28,11 @@ namespace quiccban.API
         {
             if (User.Identity.IsAuthenticated)
             {
-                var claims = User.Claims;
 
-                return Ok(await User.Claims.ToSelfUserAsync(_discordService));
+                var client = await _oAuthCaching.GetOrCreateClient(User.Claims.FirstOrDefault(x => x.Type == "accessToken").Value);
+                var guilds = await client.GetGuildSummariesAsync().FlattenAsync();
+
+                return Ok(new SelfUser(client.CurrentUser, guilds));
 
             }
             else

@@ -28,6 +28,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading;
 
 namespace quiccban
 {
@@ -53,6 +57,8 @@ namespace quiccban
                 IgnoreExtraArguments = true,
             });
             var responseService = new ResponseService(Logger);
+            var oauthCachingService = new OAuthCachingService();
+
 
             if (File.Exists(Program.dataPath + "/responses.json"))
                 responseService.Load();
@@ -62,27 +68,34 @@ namespace quiccban
                 .AddCookie(options =>
                 {
                     options.ExpireTimeSpan = new TimeSpan(7, 0, 0, 0);
+                    
                 }).AddOAuth<DiscordAuthenticationOptions, DiscordAuthenticationHandler>(DiscordAuthenticationDefaults.AuthenticationScheme, options =>
                 {
-                    options.ClaimActions.DeleteClaims(ClaimTypes.NameIdentifier, ClaimTypes.Name);
-                    options.ClaimActions.MapJsonKey(claimType: "id", jsonKey: "id");
-                    options.ClaimActions.MapJsonKey(claimType: "username", jsonKey: "username");
-                    options.ClaimActions.MapJsonKey(claimType: "discriminator", jsonKey: "discriminator");
-                    options.ClaimActions.MapJsonKey(claimType: "avatarHash", jsonKey: "avatar");
-                    options.ClaimActions.MapJsonKey(claimType: "flags", jsonKey: "flags");
-                    options.ClaimActions.MapJsonKey(claimType: "premiumType", jsonKey: "premium_type");
-
+                    options.Events = new OAuthEvents
+                    {
+                        OnCreatingTicket = async (ctx) =>
+                        {
+                            await oauthCachingService.GetOrCreateClient(ctx.AccessToken);
+                            ctx.Identity.AddClaim(new Claim("accessToken", ctx.AccessToken));
+                        },
+                        
+                        
+                    };
+                    
                     options.ClientId = Config.Web.ClientId.ToString();
                     options.ClientSecret = Config.Web.ClientSecret;
                     options.CallbackPath = "/discord-auth";
                     
 
                     options.Scope.Add("identify");
+                    options.Scope.Add("guilds");
+                    
 
 
                 });
             services.AddSingleton(commandService);
             services.AddSingleton(responseService);
+            services.AddSingleton(oauthCachingService);
             services.AddSingleton((provider) => new DiscordService(provider));
             services.AddSingleton((provider) => new CaseHandlingService(provider));
             services.AddSingleton((provider) => new DatabaseService(provider));
@@ -168,6 +181,8 @@ namespace quiccban
                     spa.UseReactDevelopmentServer(npmScript: "start");
                 }
             });
+
+            
 
         }
     }
