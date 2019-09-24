@@ -31,9 +31,15 @@ namespace quiccban.Services
 
             });
 
-        public void Remove(string accessToken)
+        public DiscordRestClient Remove(string accessToken)
         {
-            cache.Remove(accessToken);
+            if (cache.TryGetValue(accessToken, out DiscordRestClient client))
+            {
+                cache.Remove(accessToken);
+                return client;
+            }
+            return null;
+
         }
 
 

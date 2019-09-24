@@ -17,15 +17,6 @@ namespace quiccban
     public static class Extensions
     {
 
-        private static string[] RequiredConfigValues = new string[]
-        {
-            "discordToken",
-            "prefix",
-            "allowMentionPrefix",
-            "useWebUI"
-        };
-
-
         public static ConfigResult ParseConfig(this JObject config)
         {
             var validator = JsonSchema.FromType<Config>(new JsonSchemaGeneratorSettings { AlwaysAllowAdditionalObjectProperties = true});

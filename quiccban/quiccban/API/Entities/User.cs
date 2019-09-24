@@ -7,22 +7,22 @@ using System.Threading.Tasks;
 
 namespace quiccban.API.Entities
 {
-    public struct User
+    public class User
     {
         public User(IUser user)
         {
             Id = user.Id.ToString();
             Username = user.Username;
-            Discriminator = user.DiscriminatorValue;
+            Discriminator = user.Discriminator;
             AvatarId = user.AvatarId;
             AvatarUrl = $"{DiscordConfig.CDNUrl}avatars/{Id}/{AvatarId}" ?? user.GetDefaultAvatarUrl();
-            IsBotOwner = DiscordService.ApplicationInfo.Owner.Id.ToString() == Id;
+            IsBotOwner = DiscordService.ApplicationInfo.Owner.Id == user.Id;
             CreatedAt = user.CreatedAt;
         }
 
         public string Id;
         public string Username;
-        public ushort Discriminator;
+        public string Discriminator;
         public string AvatarId;
         public string AvatarUrl;
         public bool IsBotOwner;

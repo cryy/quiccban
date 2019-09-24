@@ -11,6 +11,9 @@ using System.Threading;
 using quiccban.Services.Discord;
 using Discord.WebSocket;
 using Humanizer;
+using Microsoft.AspNetCore.SignalR;
+using quiccban.API;
+using quiccban.API.Entities;
 
 namespace quiccban.Services
 {
@@ -62,7 +65,7 @@ namespace quiccban.Services
             }
         }
 
-        public async Task<Case> CreateNewCaseAsync(IGuild guild, string reason, ActionType actionType, int actionExpiry, ulong issuerId, ulong targetId, bool doLock = true)
+        public async Task<Case> CreateNewCaseAsync(IGuild guild, string reason, ActionType actionType, int actionExpiry, IUser issuer, IUser target, bool doLock = true, int tiedDo = 0)
         {
             if(doLock)
             await databaseLock.WaitAsync();
@@ -80,6 +83,9 @@ namespace quiccban.Services
                     if (dbGuild.ModlogChannelId == 0)
                         throw new InvalidOperationException("Can't create a new case without a log channel.");
 
+                    var issuerId = issuer.Id;
+                    var targetId = target.Id;
+
                     Case @case = new Case
                     {
                         Reason = reason,
@@ -89,7 +95,8 @@ namespace quiccban.Services
                         ActionExpiry = actionExpiry,
                         UnixTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                         ForceResolved = false,
-                        Id = dbGuild.Cases.LastOrDefault() == null ? 1 : dbGuild.Cases.LastOrDefault().Id + 1
+                        Id = dbGuild.Cases.LastOrDefault() == null ? 1 : dbGuild.Cases.LastOrDefault().Id + 1,
+                        TiedTo = tiedDo
                     };
 
                     switch(actionType)
@@ -182,7 +189,7 @@ namespace quiccban.Services
                                                 break;
                                         }
 
-                                        await CreateNewCaseAsync(guild, "Warn threshold crossed.", dbGuild.WarnThresholdActionType, dbGuild.WarnThresholdActionExpiry, discordService.discordClient.CurrentUser.Id, targetId, false);
+                                        await CreateNewCaseAsync(guild, "Warn threshold crossed.", dbGuild.WarnThresholdActionType, dbGuild.WarnThresholdActionExpiry, discordService.discordClient.CurrentUser, target, false);
                                     }
                                     finally
                                     {
@@ -193,6 +200,8 @@ namespace quiccban.Services
                             }
                         }
                     }
+
+                    _ = Task.Run(async () => { await _serviceProvider.GetService<IHubContext<SocketHub>>().Clients.All.SendAsync("NEW_CASE", new APICase(latestCase, new User(target), new User(issuer))); });
 
                     return latestCase;
 

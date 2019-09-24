@@ -34,34 +34,46 @@ namespace quiccban.Services.Discord.Commands.Modules
         [RequireBotPermission(ChannelPermission.ManageMessages)]
         public async Task<CommandResult> HistoryAsync(SocketGuildUser u, bool onlyActive = false, [IsntActionType(ActionType.None)]ActionType type = default)
         {
-            var dbGuild = await _databaseService.GetOrCreateGuildAsync(Context.Guild);
-
-            var history = type == default ? dbGuild.Cases.Where(x => x.TargetId == u.Id) : dbGuild.Cases.Where(x => x.TargetId == u.Id && x.ActionType == type);
-            history = onlyActive ? history.Where(x => !x.Resolved) : history;
-
-            if (!history.Any())
-                return new QuiccbanFailResult(string.Format(_responseService.Get("history_no_cases"), u.ToString(), u.Mention, onlyActive ? "active " : ""));
-
-
-            List<Embed> embeds = new List<Embed>();
-            var historyGrouping = history.OrderByDescending(x => x.Id).Select((@case, index) => new { Case = @case, Index = index }).GroupBy(x => x.Index / 5, x => x.Case);
-
-            foreach (var group in historyGrouping)
-                embeds.Add(await _helperService.ConstructHistoryEmbedAsync(group, u));
-
-            if (embeds.Count > 1)
+            try
             {
-                var paginatedMessage = new PaginatedMessage { Pages = embeds };
+                var dbGuild = await _databaseService.GetOrCreateGuildAsync(Context.Guild);
 
-                var criterion = new Criteria<SocketReaction>();
-                criterion.AddCriterion(new EnsureReactionFromSourceUserCriterion());
+                var history = type == default ? dbGuild.Cases.Where(x => x.TargetId == u.Id) : dbGuild.Cases.Where(x => x.TargetId == u.Id && x.ActionType == type);
+                history = onlyActive ? history.Where(x => !x.Resolved) : history;
 
-                await _interactiveService.SendPaginatedMessageAsync(Context, paginatedMessage, criterion);
+                Console.WriteLine("aaa");
+
+                if (!history.Any())
+                    return new QuiccbanFailResult(string.Format(_responseService.Get("history_no_cases"), u.ToString(), u.Mention, onlyActive ? "active " : ""));
+
+
+                Console.WriteLine("bbb");
+
+                List<Embed> embeds = new List<Embed>();
+                var historyGrouping = history.OrderByDescending(x => x.Id).Select((@case, index) => new { Case = @case, Index = index }).GroupBy(x => x.Index / 5, x => x.Case);
+
+                foreach (var group in historyGrouping)
+                    embeds.Add(await _helperService.ConstructHistoryEmbedAsync(group, u));
+
+                if (embeds.Count > 1)
+                {
+                    var paginatedMessage = new PaginatedMessage { Pages = embeds };
+
+                    var criterion = new Criteria<SocketReaction>();
+                    criterion.AddCriterion(new EnsureReactionFromSourceUserCriterion());
+
+                    await _interactiveService.SendPaginatedMessageAsync(Context, paginatedMessage, criterion);
+                }
+                else
+                    await ReplyAsync(embed: embeds.FirstOrDefault());
+
+                return new QuiccbanSuccessResult();
             }
-            else
-                await ReplyAsync(embed: embeds.FirstOrDefault());
-
-            return new QuiccbanSuccessResult();
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+                return new QuiccbanSuccessResult();
+            }
         }
 
         [Command("history")]
@@ -78,12 +90,12 @@ namespace quiccban.Services.Discord.Commands.Modules
             switch (@case.Guild.LogStyle)
             {
                 case LogStyle.Basic:
-                    await ReplyAsync(await _helperService.ConstructCaseMessageAsync(@case));
+                    await ReplyAsync(await _helperService.ConstructCaseMessageAsync(@case, true));
                     break;
                 case LogStyle.Modern:
                     var eb = new EmbedBuilder();
                     eb.WithTitle($"Case **{@case.Id}**  »  {@case.ActionType.Humanize()}");
-                    eb.WithDescription(await _helperService.ConstructCaseMessageAsync(@case));
+                    eb.WithDescription(await _helperService.ConstructCaseMessageAsync(@case, true));
                     await ReplyAsync(embed: eb.Build());
                     break;
             }

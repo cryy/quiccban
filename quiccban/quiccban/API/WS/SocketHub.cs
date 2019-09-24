@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using quiccban.API.Filters;
 using quiccban.Services.Discord;
 using System;
 using System.Collections.Generic;
@@ -7,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace quiccban.API
 {
+    [ServiceFilter(typeof(RequireAuthAttribute))]
     public class SocketHub : Hub
     {
         private Config _config;
@@ -19,8 +22,7 @@ namespace quiccban.API
         }
 
         public override async Task OnConnectedAsync()
-        {
-
+        {     
             await base.OnConnectedAsync();
         }
 

@@ -32,6 +32,7 @@ using Microsoft.AspNetCore.Authentication.OAuth;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
+using quiccban.API.Filters;
 
 namespace quiccban
 {
@@ -64,6 +65,7 @@ namespace quiccban
                 responseService.Load();
 
             services.AddResponseCompression();
+            services.AddSignalR();
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
@@ -106,6 +108,8 @@ namespace quiccban
 
                 return new InteractiveService(discordService.discordClient);
             });
+            services.AddScoped<RequireAuthAttribute>();
+            services.AddScoped<RequireReadyClientAttribute>();
             services.AddDbContext<GuildStorage>(ServiceLifetime.Transient);
 
 
@@ -165,6 +169,12 @@ namespace quiccban
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
 
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<SocketHub>("/api/ws");
+            });
+
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
@@ -172,8 +182,11 @@ namespace quiccban
                     template: "{controller}/{action=Index}/{id?}");
             });
 
+            
+
             app.UseSpa(spa =>
             {
+                
                 spa.Options.SourcePath = "ClientApp";
 
                 if (env.IsDevelopment())
@@ -182,7 +195,8 @@ namespace quiccban
                 }
             });
 
-            
+
+
 
         }
     }

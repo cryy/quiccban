@@ -150,7 +150,7 @@ namespace quiccban.Services.Discord
                 var data = auditLog.Data as BanAuditLogData;
                 var dbService = _serviceProvider.GetService<DatabaseService>();
 
-                await dbService.CreateNewCaseAsync(g, auditLog.Reason, ActionType.Ban, 0, auditLog.User.Id, data.Target.Id);
+                await dbService.CreateNewCaseAsync(g, auditLog.Reason, ActionType.Ban, 0, auditLog.User, data.Target);
 
             };
 
@@ -174,7 +174,7 @@ namespace quiccban.Services.Discord
                 if (tempcase != null)
                     await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true, false);
                 else
-                    await dbService.CreateNewCaseAsync(g, auditLog.Reason, ActionType.Ban, 0, auditLog.User.Id, data.Target.Id);
+                    await dbService.CreateNewCaseAsync(g, auditLog.Reason, ActionType.Ban, 0, auditLog.User, data.Target);
             };
 
             discordClient.UserLeft += async (u) =>
@@ -192,7 +192,7 @@ namespace quiccban.Services.Discord
                 var data = auditLog.Data as KickAuditLogData;
                 var dbService = _serviceProvider.GetService<DatabaseService>();
 
-                await dbService.CreateNewCaseAsync(u.Guild, auditLog.Reason, ActionType.Kick, 0, auditLog.User.Id, data.Target.Id);
+                await dbService.CreateNewCaseAsync(u.Guild, auditLog.Reason, ActionType.Kick, 0, auditLog.User, data.Target);
             };
 
             discordClient.GuildMemberUpdated += async (u_before, u_after) =>
@@ -215,7 +215,7 @@ namespace quiccban.Services.Discord
 
                 if(data.Roles.Any(x => x.RoleId == dbGuild.MuteRoleId && x.Added))
                 {
-                    await dbService.CreateNewCaseAsync(u_after.Guild, auditLog.Reason, ActionType.Mute, 0, auditLog.User.Id, data.Target.Id);
+                    await dbService.CreateNewCaseAsync(u_after.Guild, auditLog.Reason, ActionType.Mute, 0, auditLog.User, data.Target);
                 }
                 else if(data.Roles.Any(x => x.RoleId == dbGuild.MuteRoleId && !x.Added))
                 {
@@ -223,7 +223,7 @@ namespace quiccban.Services.Discord
                     if (tempcase != null)
                         await _caseHandlingService.ResolveAsync(tempcase, auditLog.User, auditLog.Reason, true, false);
                     else
-                        await dbService.CreateNewCaseAsync(u_after.Guild, auditLog.Reason, ActionType.Unmute, 0, auditLog.User.Id, data.Target.Id);
+                        await dbService.CreateNewCaseAsync(u_after.Guild, auditLog.Reason, ActionType.Unmute, 0, auditLog.User, data.Target);
                 }
             };
 

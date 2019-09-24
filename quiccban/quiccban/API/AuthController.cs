@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using quiccban.API.Entities;
+using quiccban.API.Filters;
 using quiccban.Services;
 using quiccban.Services.Discord;
 
@@ -28,18 +29,13 @@ namespace quiccban.API
         [HttpGet("login")]
         public IActionResult Login()
         {
-            if (!_discordService.IsReady)
-                return StatusCode(503, "Discord client is not ready yet.");
-
             return Challenge(new AuthenticationProperties { RedirectUri = "/" }, DiscordAuthenticationDefaults.AuthenticationScheme);
         }
 
         [HttpGet("logout")]
+        [ServiceFilter(typeof(RequireAuthAttribute))]
         public async Task<IActionResult> LogOut()
         {
-            if (!_discordService.IsReady)
-                return StatusCode(503, "Discord client is not ready yet.");
-
             _oAuthCaching.Remove(HttpContext.User.Claims.FirstOrDefault(x => x.Type == "accessToken").Value);
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 

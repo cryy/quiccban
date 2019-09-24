@@ -90,12 +90,14 @@ namespace quiccban.Services
 
                     await dbService.UpdateCaseAsync(guildCase, doLock);
 
+                    var target = guild.GetUser(guildCase.TargetId) ?? (IUser)(await discordService.discordClient.Rest.GetUserAsync(guildCase.TargetId));
+
 
                     switch (guildCase.ActionType)
                     {
                         case ActionType.Warn:
                             await UpdateDiscordMessage(guildCase);
-                            await dbService.CreateNewCaseAsync(guild, (reason == null ? $"``Responsible moderator please do {config.Prefix} reason {{0}} <reason>``" : reason) + (guildCase.GetDiscordMessageLink() == null ? "" : (guildCase.Guild.LogStyle == LogStyle.Basic ? $" (Tied to Case #{guildCase.Id})" : $"(Tied to [Case #{guildCase.Id}]({guildCase.GetDiscordMessageLink()}))")), ActionType.Unwarn, 0, resolver.Id, guildCase.TargetId, doLock);
+                            await dbService.CreateNewCaseAsync(guild, reason, ActionType.Unwarn, 0, resolver, target, doLock, guildCase.Id);
                             break;
                         case ActionType.TempMute:
                         case ActionType.Mute:
@@ -103,12 +105,11 @@ namespace quiccban.Services
                             IRole muteRole = guild.GetRole(guildCase.Guild.MuteRoleId);
                             if (muteRole != null)
                             {
-                                var target = guild.GetUser(guildCase.TargetId);
-                                if (target != null)
-                                    await target.RemoveRoleAsync(muteRole);
+                                if (target is SocketGuildUser guildTarget)
+                                    await guildTarget.RemoveRoleAsync(muteRole);
                             }
 
-                            await dbService.CreateNewCaseAsync(guild, (reason == null ? $"``Responsible moderator please do {config.Prefix} reason {{0}} <reason>``" : reason) + (guildCase.ActionType == ActionType.TempMute ? (guildCase.GetDiscordMessageLink() == null ? "" : (guildCase.Guild.LogStyle == LogStyle.Basic ? $" (Tied to Case #{guildCase.Id})" : $"(Tied to [Case #{guildCase.Id}]({guildCase.GetDiscordMessageLink()}))")) : ""), ActionType.Unmute, 0, resolver.Id, guildCase.TargetId, doLock);
+                            await dbService.CreateNewCaseAsync(guild, reason, ActionType.Unmute, 0, resolver, target, doLock, guildCase.Id);
                             break;
                         case ActionType.TempBan:
                         case ActionType.Ban:
@@ -117,7 +118,7 @@ namespace quiccban.Services
                             if (bans.Any(x => x.User.Id == guildCase.TargetId))
                                 await guild.RemoveBanAsync(guildCase.TargetId);
                             await UpdateDiscordMessage(guildCase);
-                            await dbService.CreateNewCaseAsync(guild, (reason == null ? $"``Responsible moderator please do {config.Prefix} reason {{0}} <reason>``" : reason) + (guildCase.ActionType == ActionType.TempBan ? (guildCase.GetDiscordMessageLink() == null ? "" : (guildCase.Guild.LogStyle == LogStyle.Basic ? $" (Tied to Case #{guildCase.Id})" : $"(Tied to [Case #{guildCase.Id}]({guildCase.GetDiscordMessageLink()}))")) : ""), ActionType.Unban, 0, resolver.Id, guildCase.TargetId, doLock);
+                            await dbService.CreateNewCaseAsync(guild, reason, ActionType.Unban, 0, resolver, target, doLock, guildCase.Id);
                             break;
                         default:
                             break;
@@ -206,27 +207,28 @@ namespace quiccban.Services
 
                 await dbService.UpdateCaseAsync(guildCase, doLock);
 
+                var target = guild.GetUser(guildCase.TargetId) ?? (IUser)(await discordService.discordClient.Rest.GetUserAsync(guildCase.TargetId));
+
                 switch (guildCase.ActionType)
                 {
                     case ActionType.Warn:
                         await UpdateDiscordMessage(guildCase);
-                        await dbService.CreateNewCaseAsync(guild, "Warn expired. " + (guildCase.GetDiscordMessageLink() == null ? "" : (guildCase.Guild.LogStyle == LogStyle.Basic ? $" (Tied to Case #{guildCase.Id})" : $"(Tied to [Case #{guildCase.Id}]({guildCase.GetDiscordMessageLink()}))")), ActionType.Unwarn, 0, discordService.discordClient.CurrentUser.Id, guildCase.TargetId, doLock);
+                        await dbService.CreateNewCaseAsync(guild, "Warn expired.", ActionType.Unwarn, 0, discordService.discordClient.CurrentUser, target, doLock, guildCase.Id);
                         break;
                     case ActionType.TempMute:
                         await UpdateDiscordMessage(guildCase);
                         IRole muteRole = guild.GetRole(dbguild.MuteRoleId);
                         if (muteRole != null)
                         {
-                            var target = guild.GetUser(guildCase.TargetId);
-                            if (target != null)
-                                await target.RemoveRoleAsync(muteRole);
+                            if (target is SocketGuildUser guildTarget)
+                                await guildTarget.RemoveRoleAsync(muteRole);
                         }
 
-                        await dbService.CreateNewCaseAsync(guild, "Temporary mute expired. " + (guildCase.GetDiscordMessageLink() == null ? "" : (guildCase.Guild.LogStyle == LogStyle.Basic ? $" (Tied to Case #{guildCase.Id})" : $"(Tied to [Case #{guildCase.Id}]({guildCase.GetDiscordMessageLink()}))")), ActionType.Unmute, 0, discordService.discordClient.CurrentUser.Id, guildCase.TargetId, doLock);
+                        await dbService.CreateNewCaseAsync(guild, "Temporary mute expired.", ActionType.Unmute, 0, discordService.discordClient.CurrentUser, target, doLock, guildCase.Id);
                         break;
                     case ActionType.TempBan:
                         await UpdateDiscordMessage(guildCase);
-                        await dbService.CreateNewCaseAsync(guild, "Temporary ban expired. " + (guildCase.GetDiscordMessageLink() == null ? "" : (guildCase.Guild.LogStyle == LogStyle.Basic ? $" (Tied to Case #{guildCase.Id})" : $"(Tied to [Case #{guildCase.Id}]({guildCase.GetDiscordMessageLink()}))")), ActionType.Unban, 0, discordService.discordClient.CurrentUser.Id, guildCase.TargetId, doLock);
+                        await dbService.CreateNewCaseAsync(guild, "Temporary ban expired.", ActionType.Unban, 0, discordService.discordClient.CurrentUser, target, doLock);
                         break;
                     default:
                         break;

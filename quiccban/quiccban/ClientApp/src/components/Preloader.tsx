@@ -1,22 +1,9 @@
 ﻿import * as React from 'react';
-import { Typography, Divider, Button, Grid, makeStyles, createStyles, Theme, CircularProgress } from "@material-ui/core";
+import { CircularProgress } from "@material-ui/core";
+import { PreloaderProps } from '../props/PreloaderProps';
 
-const useStyle = makeStyles(() =>
-    createStyles({
-        loader: {
-            position: "absolute",
-            marginLeft: "50%",
-            left: "-80px",
-            top: "50%",
-            marginTop: "-80px"
-        }
-    }),
-);
-
-export default function Preloader() {
-
-    const classes = useStyle({});
+export default function Preloader(props: PreloaderProps) {
 
 
-    return <CircularProgress className={classes.loader} size={180} thickness={1.2} />
+    return <CircularProgress className={props.iclass ? props.iclass : undefined} size={(props.size ? props.size : 180)} thickness={props.thickness ? props.thickness : 1.2} />
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using quiccban.API.Entities;
+using quiccban.API.Filters;
 using quiccban.Services;
 using quiccban.Services.Discord;
 using System;
@@ -14,6 +15,7 @@ using System.Threading.Tasks;
 namespace quiccban.API
 {
     [Route("api/context")]
+    [ServiceFilter(typeof(RequireAuthAttribute))]
     public class ContextController : ControllerBase
     {
         DiscordService _discordService;
@@ -25,33 +27,12 @@ namespace quiccban.API
         }
 
         [HttpGet("user")]
-        public async Task<IActionResult> Userinfo()
+        public IActionResult Userinfo()
         {
-            if (!_discordService.IsReady)
-                return StatusCode(503, "Discord client is not ready yet.");
+            var client = (DiscordRestClient)HttpContext.Items["client"];
+            var guilds = (IEnumerable<RestUserGuild>)HttpContext.Items["guilds"];
 
-            if (User.Identity.IsAuthenticated)
-            {
-                try
-                {
-                    var client = await _oAuthCaching.GetOrCreateClient(User.Claims.FirstOrDefault(x => x.Type == "accessToken").Value);
-
-
-                    var guilds = await client.GetGuildSummariesAsync().FlattenAsync();
-                    return Ok(new SelfUser(client.CurrentUser, guilds));
-                }
-                catch
-                {
-                    //user has possibly deauthorized the app so we should log them out 
-                    return LocalRedirect("~/api/auth/logout");
-                }
-
-            }
-            else
-            {
-                return Unauthorized();
-
-            }
+            return Ok(new SelfUser(client.CurrentUser, guilds));
         }
     }
 }

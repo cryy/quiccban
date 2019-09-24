@@ -39,6 +39,8 @@ namespace quiccban.Database.Models
     { 
         public int Id { get; set; }
 
+        public int TiedTo { get; set; }
+
         public ulong DiscordMessageId { get; set; }
 
         public Guild Guild { get; set; }

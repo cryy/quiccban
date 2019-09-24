@@ -13,6 +13,7 @@ using Discord.WebSocket;
 using System.Threading;
 using Humanizer;
 using quiccban.Services.Discord.Commands.Objects;
+using quiccban.Database;
 
 namespace quiccban.Services
 {
@@ -35,13 +36,18 @@ namespace quiccban.Services
             IUser target = discordService.discordClient.GetUser(@case.TargetId) as IUser ?? await discordService.discordClient.Rest.GetUserAsync(@case.TargetId);
             IUser mod = discordService.discordClient.GetUser(@case.IssuerId) as IUser ?? await discordService.discordClient.Rest.GetUserAsync(@case.IssuerId);
 
+            Case tiedToCase = null;
+            if(@case.TiedTo != 0)
+                tiedToCase = @case.Guild.Cases.FirstOrDefault(x => x.Id == @case.TiedTo);
+
             switch (@case.Guild.LogStyle)
             {
+
                 case LogStyle.Basic:
                     sb.AppendLine($"**Case #{@case.Id}** | {@case.ActionType.Humanize()}");
                     sb.AppendLine("");
                     sb.AppendLine($"**User:** {target} [{target.Id}] {(external ? "" : $"[{target.Mention}]")}");
-                    sb.AppendLine($"**Reason**: {(@case.Reason == null ? $"``Responsible moderator please do {config.Prefix} reason {@case.Id} <reason>``" : string.Format(@case.Reason, @case.Id))}");
+                    sb.AppendLine($"**Reason**: {(@case.Reason == null ? $"``Responsible moderator please do {config.Prefix} reason {@case.Id} <reason>``" : @case.Reason.Truncate(1000))}" + (tiedToCase != null ? $"[Tied to Case #{tiedToCase.Id}]" : ""));
                     sb.AppendLine($"**Responsible moderator**: {mod}");
                     if (@case.ActionExpiry > 0 || @case.ActionType == ActionType.Warn)
                     {
@@ -52,7 +58,7 @@ namespace quiccban.Services
                     return sb.ToString();
                 case LogStyle.Modern:
                     sb.AppendLine($"\u200b\u3000▫ **User**: {target} [{target.Id}] [{target.Mention}]");
-                    sb.AppendLine($"\u200b\u3000▫ **Reason**: {(@case.Reason == null ? $"``Responsible moderator please do {config.Prefix} reason {@case.Id} <reason>``" : string.Format(@case.Reason, @case.Id))}");
+                    sb.AppendLine($"\u200b\u3000▫ **Reason**: {(@case.Reason == null ? $"``Responsible moderator please do {config.Prefix} reason {@case.Id} <reason>``" : @case.Reason.Truncate(1000))}" + (tiedToCase != null ? (tiedToCase.GetDiscordMessageLink() != null ? $"[Tied to Case #{tiedToCase.Id}]({tiedToCase.GetDiscordMessageLink()})" : $"[Tied to Case #{tiedToCase.Id}]") : ""));
                     sb.AppendLine($"\u200b\u3000▫ **Responsible moderator**: {mod}");
                     if (@case.ActionExpiry > 0 || @case.ActionType == ActionType.Warn)
                     {
@@ -133,7 +139,7 @@ namespace quiccban.Services
 
                 sb.AppendLine(@case.GetDiscordMessageLink() != null ? $"**[Case {@case.Id}]({@case.GetDiscordMessageLink()})**:" : $"**Case {@case.Id}**:");
                 sb.AppendLine($"\u3000Type: {@case.ActionType.Humanize()}");
-                sb.AppendLine($"\u3000Reason: {(@case.Reason == null ? "No reason has been set." : (@case.Reason.StartsWith("``Responsible moderator please do") ? "No reason has been set" : @case.Reason))}");
+                sb.AppendLine($"\u3000Reason: {(@case.Reason == null ? "No reason has been set." : @case.Reason.Truncate(250))}");
                 sb.AppendLine($"\u3000Responsible moderator: {mod}");
                 if (@case.ActionExpiry > 0 || @case.ActionType == ActionType.Warn)
                 {

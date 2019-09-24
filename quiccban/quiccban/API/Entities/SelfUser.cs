@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace quiccban.API.Entities
 {
-    public struct SelfUser
+    public class SelfUser
     {
         public SelfUser(RestSelfUser user, IEnumerable<RestUserGuild> guilds)
         {

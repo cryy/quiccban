@@ -58,7 +58,7 @@ namespace quiccban.Services.Discord.Commands.Modules
         {
             try
             {
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Warn, 0, Context.User.Id, u.Id);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Warn, 0, Context.User, u);
             }
             catch (InvalidOperationException ex)
             {
@@ -118,7 +118,7 @@ namespace quiccban.Services.Discord.Commands.Modules
 
                 await u.AddRoleAsync(muteRole);
 
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.TempMute, (int)time.TotalSeconds, Context.User.Id, u.Id);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.TempMute, (int)time.TotalSeconds, Context.User, u);
             }
             catch (InvalidOperationException ex)
             {
@@ -155,7 +155,7 @@ namespace quiccban.Services.Discord.Commands.Modules
                     }
                 }
 
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Mute, 0, Context.User.Id, u.Id);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Mute, 0, Context.User, u);
             }
             catch (InvalidOperationException ex)
             {
@@ -178,7 +178,7 @@ namespace quiccban.Services.Discord.Commands.Modules
                 if (muteRole == null)
                     muteRole = await _helperService.CreateMuteRoleAsync(dbGuild);
 
-                var @case = dbGuild.Cases.LastOrDefault(x => !x.Resolved && x.ActionType == ActionType.TempMute && x.TargetId == u.Id);
+                var @case = dbGuild.Cases.LastOrDefault(x => !x.Resolved && (x.ActionType == ActionType.TempMute || x.ActionType == ActionType.Mute) && x.TargetId == u.Id);
 
                 if (@case == null)
                     return new QuiccbanFailResult(string.Format(_responseService.Get("unmute_not_muted"), u.ToString(), u.Mention));
@@ -201,7 +201,7 @@ namespace quiccban.Services.Discord.Commands.Modules
             await u.KickAsync(reason);
             try
             {
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Kick, 0, Context.User.Id, u.Id);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Kick, 0, Context.User, u);
             }
             catch (InvalidOperationException ex)
             {
@@ -218,7 +218,7 @@ namespace quiccban.Services.Discord.Commands.Modules
             await u.BanAsync(0, reason);
             try
             {
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.TempBan, (int)time.TotalSeconds, Context.User.Id, u.Id);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.TempBan, (int)time.TotalSeconds, Context.User, u);
             }
             catch (InvalidOperationException ex)
             {
@@ -235,8 +235,9 @@ namespace quiccban.Services.Discord.Commands.Modules
             await u.BanAsync(0, reason);
             try
             {
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Ban, 0, Context.User.Id, u.Id);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Ban, 0, Context.User, u);
             }
+
             catch (InvalidOperationException ex)
             {
                 return new QuiccbanFailResult(ex.Message);
@@ -249,13 +250,15 @@ namespace quiccban.Services.Discord.Commands.Modules
         [RequireBotPermission(GuildPermission.BanMembers)]
         public async Task<CommandResult> HackbanAsync(ulong u, [Remainder]string reason = null)
         {
-            var user = await ((IGuild)Context.Guild).GetUserAsync(u);
+            var user = (IUser)await ((IGuild)Context.Guild).GetUserAsync(u);
             if (user != null)
                 return new QuiccbanFailResult(string.Format(_responseService.Get("hackban_user_in_guild"), user.ToString(), user.Mention));
 
+            user = await Context.Client.Rest.GetUserAsync(u);
+
             try
             {
-                await Context.Guild.AddBanAsync(u, reason: reason);
+                await Context.Guild.AddBanAsync(user, reason: reason);
             }
             catch (HttpException ex)
             {
@@ -266,7 +269,7 @@ namespace quiccban.Services.Discord.Commands.Modules
             }
             try
             {
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.HackBan, 0, Context.User.Id, u);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.HackBan, 0, Context.User, user);
             }
             catch (InvalidOperationException ex)
             {
@@ -284,7 +287,7 @@ namespace quiccban.Services.Discord.Commands.Modules
             await Context.Guild.RemoveBanAsync(ban.User);
             try
             {
-                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Unban, 0, Context.User.Id, ban.User.Id);
+                await _databaseService.CreateNewCaseAsync(Context.Guild, reason, ActionType.Unban, 0, Context.User, ban.User);
             }
             catch (InvalidOperationException ex)
             {
