@@ -16,7 +16,7 @@
     "notistack": "^0.8.9",
     "react": "^16.0.0",
     "react-app-polyfill": "^1.0.1",
-    "react-dev-utils": "^9.0.1",
+    "react-dev-utils": "^11.0.4",
     "react-dom": "^16.0.0",
     "react-router-dom": "^4.2.2",
     "reactstrap": "^6.3.0",
